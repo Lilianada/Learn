@@ -1,10 +1,11 @@
 "use client"
 
-import { EllipsisVertical } from "lucide-react"
+import { EllipsisVertical, LogIn, LogOut } from "lucide-react"
 import { useTheme as useNextTheme } from "next-themes"
 import { useSettings} from "@/store/use-settings"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/auth-context"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 export function SettingsMenu() {
   const { setTheme: setNextTheme } = useNextTheme()
   const { fontFamily, fontSize, theme, setFontFamily, setFontSize, setTheme } = useSettings()
+  const { user, signIn, signOut, loading } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -172,6 +174,30 @@ export function SettingsMenu() {
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
             </DropdownMenuSub>
+            
+            <DropdownMenuItem 
+              onClick={() => {
+                if (user) {
+                  signOut()
+                } else {
+                  signIn()
+                }
+                setOpen(false)
+              }}
+              className="mt-2"
+            >
+              {user ? (
+                <>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign Out</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  <span>Sign In</span>
+                </>
+              )}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TooltipTrigger>
