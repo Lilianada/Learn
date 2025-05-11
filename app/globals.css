@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 210 40% 98%;
+
+    --card: 0 0% 7%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 0 0% 5%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 0 0% 12%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-medium tracking-tight;
+  }
+}
+
+/* TipTap Editor Styles */
+.ProseMirror {
+  @apply outline-none min-h-[300px];
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  @apply text-muted-foreground;
+  content: attr(data-placeholder);
+  float: left;
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror table {
+  @apply border-collapse w-full my-4;
+}
+
+.ProseMirror table td,
+.ProseMirror table th {
+  @apply border p-2 relative;
+}
+
+.ProseMirror table th {
+  @apply bg-muted font-bold;
+}
+
+.ProseMirror pre {
+  @apply bg-muted p-4 rounded-md font-mono text-sm my-4 overflow-x-auto;
+}
+
+.ProseMirror blockquote {
+  @apply border-l-4 border-muted pl-4 italic my-4;
+}
+
+.ProseMirror img {
+  @apply max-w-full h-auto my-4;
+}
+
+.ProseMirror ul {
+  @apply list-disc pl-6 my-4;
+}
+
+.ProseMirror ol {
+  @apply list-decimal pl-6 my-4;
+}
+
+.ProseMirror h1 {
+  @apply text-lg font-medium my-4;
+}
+
+.ProseMirror h2 {
+  @apply text-base font-medium my-3;
+}
+
+.ProseMirror h3 {
+  @apply text-sm font-medium my-2;
+}
+
+/* Light mode specific styles */
+.light .ProseMirror {
+  @apply text-gray-800;
+}
+
+.light .ProseMirror h1,
+.light .ProseMirror h2,
+.light .ProseMirror h3 {
+  @apply text-gray-900;
+}
+
+.light .ProseMirror blockquote {
+  @apply border-gray-200 text-gray-700;
+}
+
+.light .ProseMirror pre {
+  @apply bg-gray-50 text-gray-800 border border-gray-200;
+}
+
+/* Dark mode specific styles */
+.dark .ProseMirror {
+  @apply text-gray-200;
+}
+
+.dark .ProseMirror h1,
+.dark .ProseMirror h2,
+.dark .ProseMirror h3 {
+  @apply text-gray-50;
+}
+
+.dark .ProseMirror blockquote {
+  @apply border-gray-700 text-gray-300;
+}
+
+.dark .ProseMirror pre {
+  @apply bg-gray-900 text-gray-200 border border-gray-800;
+}
+
+.dark .ProseMirror table th {
+  @apply bg-gray-900;
+}
+
+.dark .ProseMirror table td,
+.dark .ProseMirror table th {
+  @apply border-gray-800;
+}
+
+/* Add these transition classes */
+.sidebar-transition {
+  transition-property: transform, opacity, width;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.content-transition {
+  transition-property: margin, padding, width;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Update the mobile responsiveness section */
+@media (max-width: 768px) {
+  .sidebar-open {
+    @apply fixed inset-0 z-50 bg-background;
+    animation: slideIn 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .sidebar-closed {
+    animation: slideOut 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+  }
+
+  .content-with-sidebar {
+    @apply ml-0;
+  }
+}

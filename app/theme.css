@@ -1,0 +1,126 @@
+
+/* Font families */
+[data-font-family="sans"] {
+  --font-family: 'Geist Sans', system-ui, sans-serif;
+}
+
+[data-font-family="mono"] {
+  --font-family: 'Geist Mono', monospace;
+}
+
+/* Font sizes */
+[data-font-size="small"] {
+  --font-size-base: 12px;
+}
+
+[data-font-size="medium"] {
+  --font-size-base: 14px;
+}
+
+[data-font-size="large"] {
+  --font-size-base: 16px;
+}
+
+/* Warm theme */
+html.warm {
+  --background: 35 100% 98%;
+  --foreground: 35 10% 10%;
+
+  --card: 30 50% 98%;
+  --card-foreground: 35 10% 10%;
+
+  --popover: 35 100% 98%;
+  --popover-foreground: 35 10% 10%;
+
+  --primary: 35 100% 50%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 35 30% 94%;
+  --secondary-foreground: 35 10% 10%;
+
+  --muted: 35 30% 94%;
+  --muted-foreground: 35 10% 40%;
+
+  --accent: 35 30% 94%;
+  --accent-foreground: 35 10% 10%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 35 30% 90%;
+  --input: 35 30% 90%;
+  --ring: 35 100% 50%;
+  
+  /* Warm theme specific shadows */
+  --shadow: 0 1px 2px rgba(255, 210, 160, 0.2), 0 2px 6px rgba(255, 150, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(255, 210, 160, 0.1), 0 2px 4px -1px rgba(255, 150, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(255, 210, 160, 0.1), 0 4px 6px -2px rgba(255, 150, 0, 0.05);
+}
+
+/* Apply font settings */
+body {
+  font-family: var(--font-family, system-ui, sans-serif);
+  font-size: var(--font-size-base, 14px);
+}
+
+/* Minimal styles for editor */
+.ProseMirror {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.editor-borderless {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.editor-borderless .ProseMirror {
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  transition: background-color 0.2s ease;
+}
+
+.editor-borderless .ProseMirror:focus {
+  background-color: hsl(var(--muted)/0.3) !important;
+}
+
+.editor-borderless .is-editor-empty:before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Minimal styles for topic and subtopic buttons */
+.minimal-button {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+}
+
+.minimal-button:hover {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.minimal-button.active {
+  color: hsl(var(--primary));
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* Minimal card styles */
+.minimal-card {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.minimal-card:hover {
+  background-color: hsl(var(--muted)) !important;
+}
