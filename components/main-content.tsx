@@ -289,7 +289,7 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
             <div className="text-muted-foreground text-center py-8">No topics yet. Create one to get started!</div>
           )}
         </div>
-        <div className="mt-6 mx-auto">
+        <div className="grid place-items-center">
           <Button onClick={() => setAddTopicOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
             Add Topic
