@@ -17,7 +17,9 @@ import {
   updateSubtopic as fbUpdateSubtopic,
   deleteSubtopic as fbDeleteSubtopic,
   updateSubtopicContent as fbUpdateSubtopicContent,
-  updateSubtopicStatus
+  updateSubtopicStatus,
+  reorderTopics as fbReorderTopics,
+  reorderSubtopics as fbReorderSubtopics
 } from '@/lib/firebase-service'
 import { Subject, Topic, Subtopic } from '@/types/store-types'
 import { 
@@ -67,6 +69,654 @@ type Actions = {
 
 type Store = State & Actions
 
+// Import the nanoid for unique ID generation
+import { nanoid } from "nanoid"
+
+export const useFirebaseStore = create<Store>()(
+  persist(
+    (set, get) => ({
+      subjects: {},
+      topics: {},
+      subtopics: {},
+      currentSubjectId: null,
+      currentTopicId: null,
+      currentSubtopicId: null,
+      useFirebase: false,
+      
+      hydrate: async () => {
+        try {
+          if (get().useFirebase) {
+            // We'll load firebase data elsewhere
+            console.log("Firebase mode enabled, skipping local hydration");
+            return;
+          }
+          
+          const data = await loadFileSystemData();
+          set({
+            subjects: data.subjects,
+            topics: data.topics,
+            subtopics: data.subtopics,
+          });
+        } catch (error) {
+          console.error("Failed to load data:", error);
+        }
+      },
+      
+      setUseFirebase: (value: boolean) => {
+        set({ useFirebase: value });
+      },
+      
+      setCurrentSubject: (id) => set({ currentSubjectId: id }),
+      setCurrentTopic: (id) => set({ currentTopicId: id }),
+      setCurrentSubtopic: (id) => set({ currentSubtopicId: id }),
+      
+      addSubject: async (title, description = '') => {
+        try {
+          if (get().useFirebase) {
+            const newSubject = await fbAddSubject(title, description);
+            set((state) => ({
+              subjects: {
+                ...state.subjects,
+                [newSubject.id]: newSubject as Subject,
+              },
+              currentSubjectId: newSubject.id,
+              currentTopicId: null,
+              currentSubtopicId: null,
+            }));
+          } else {
+            const id = nanoid();
+            const timestamp = new Date().toISOString();
+            
+            const newSubject: Subject = {
+              id,
+              title,
+              description,
+              createdAt: timestamp,
+              updatedAt: timestamp,
+              topicOrder: [],
+              order: Object.keys(get().subjects).length
+            };
+            
+            saveSubject(newSubject);
+            
+            set((state) => ({
+              subjects: {
+                ...state.subjects,
+                [id]: newSubject,
+              },
+              currentSubjectId: id,
+              currentTopicId: null,
+              currentSubtopicId: null,
+            }));
+          }
+        } catch (error) {
+          console.error("Failed to add subject:", error);
+        }
+      },
+      
+      updateSubject: async (id, title, description = '') => {
+        try {
+          if (get().useFirebase) {
+            await fbUpdateSubject(id, title, description);
+          } else {
+            const subject = get().subjects[id];
+            if (!subject) return;
+            
+            const updatedSubject: Subject = {
+              ...subject,
+              title,
+              description,
+              updatedAt: new Date().toISOString(),
+            };
+            
+            saveSubject(updatedSubject);
+          }
+          
+          set((state) => ({
+            subjects: {
+              ...state.subjects,
+              [id]: {
+                ...state.subjects[id],
+                title,
+                description,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }));
+        } catch (error) {
+          console.error("Failed to update subject:", error);
+        }
+      },
+      
+      deleteSubject: async (id) => {
+        try {
+          if (get().useFirebase) {
+            await fbDeleteSubject(id);
+          } else {
+            await deleteSubjectFiles(id);
+          }
+          
+          set((state) => {
+            const { [id]: _, ...remainingSubjects } = state.subjects;
+            
+            const topicIdsToRemove = Object.values(state.topics)
+              .filter(topic => topic.subjectId === id)
+              .map(topic => topic.id);
+            
+            const remainingTopics = { ...state.topics };
+            topicIdsToRemove.forEach(topicId => {
+              delete remainingTopics[topicId];
+            });
+            
+            const subtopicIdsToRemove = Object.values(state.subtopics)
+              .filter(subtopic => topicIdsToRemove.includes(subtopic.topicId))
+              .map(subtopic => subtopic.id);
+            
+            const remainingSubtopics = { ...state.subtopics };
+            subtopicIdsToRemove.forEach(subtopicId => {
+              delete remainingSubtopics[subtopicId];
+            });
+            
+            const newCurrentSubjectId = state.currentSubjectId === id
+              ? Object.keys(remainingSubjects)[0] || null
+              : state.currentSubjectId;
+            
+            const newCurrentTopicId = topicIdsToRemove.includes(state.currentTopicId || '')
+              ? null
+              : state.currentTopicId;
+            
+            const newCurrentSubtopicId = subtopicIdsToRemove.includes(state.currentSubtopicId || '')
+              ? null
+              : state.currentSubtopicId;
+            
+            return {
+              subjects: remainingSubjects,
+              topics: remainingTopics,
+              subtopics: remainingSubtopics,
+              currentSubjectId: newCurrentSubjectId,
+              currentTopicId: newCurrentTopicId,
+              currentSubtopicId: newCurrentSubtopicId,
+            };
+          });
+        } catch (error) {
+          console.error("Failed to delete subject:", error);
+        }
+      },
+      
+      reorderTopics: async (subjectId, topicOrder) => {
+        try {
+          // Update Firebase if enabled
+          if (get().useFirebase) {
+            await fbReorderTopics(subjectId, topicOrder);
+          }
+          
+          // Update local state
+          set((state) => ({
+            subjects: {
+              ...state.subjects,
+              [subjectId]: {
+                ...state.subjects[subjectId],
+                topicOrder,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }));
+          
+          // Save to local storage if not using Firebase
+          if (!get().useFirebase) {
+            const subject = get().subjects[subjectId];
+            if (subject) {
+              saveSubject({
+                ...subject,
+                topicOrder,
+                updatedAt: new Date().toISOString(),
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Failed to reorder topics:", error);
+        }
+      },
+      
+      addTopic: async (subjectId, title, description = '') => {
+        try {
+          if (get().useFirebase) {
+            const newTopic = await fbAddTopic(subjectId, title, description);
+            
+            set((state) => {
+              // Get current topicOrder for subject
+              const subject = state.subjects[subjectId];
+              const topicOrder = subject?.topicOrder || [];
+              
+              return {
+                topics: {
+                  ...state.topics,
+                  [newTopic.id]: newTopic as Topic,
+                },
+                subjects: {
+                  ...state.subjects,
+                  [subjectId]: {
+                    ...state.subjects[subjectId],
+                    topicOrder: [...topicOrder, newTopic.id],
+                  },
+                },
+                currentTopicId: newTopic.id,
+                currentSubtopicId: null,
+              };
+            });
+          } else {
+            const id = nanoid();
+            const timestamp = new Date().toISOString();
+            
+            const newTopic: Topic = {
+              id,
+              subjectId,
+              title,
+              description,
+              content: '',
+              createdAt: timestamp,
+              updatedAt: timestamp,
+              subtopicOrder: [],
+              order: Object.values(get().topics).filter(t => t.subjectId === subjectId).length,
+            };
+            
+            saveTopic(newTopic);
+            
+            const subject = get().subjects[subjectId];
+            if (subject) {
+              const updatedSubject: Subject = {
+                ...subject,
+                topicOrder: [...(subject.topicOrder || []), id],
+                updatedAt: timestamp,
+              };
+              saveSubject(updatedSubject);
+              
+              set((state) => ({
+                topics: {
+                  ...state.topics,
+                  [id]: newTopic,
+                },
+                subjects: {
+                  ...state.subjects,
+                  [subjectId]: updatedSubject,
+                },
+                currentTopicId: id,
+                currentSubtopicId: null,
+              }));
+            }
+          }
+        } catch (error) {
+          console.error("Failed to add topic:", error);
+        }
+      },
+      
+      updateTopic: async (id, title, description = '') => {
+        try {
+          const topic = get().topics[id];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            await fbUpdateTopic(topic.subjectId, id, title, description);
+          } else {
+            const updatedTopic: Topic = {
+              ...topic,
+              title,
+              description,
+              updatedAt: new Date().toISOString(),
+            };
+            
+            saveTopic(updatedTopic);
+          }
+          
+          set((state) => ({
+            topics: {
+              ...state.topics,
+              [id]: {
+                ...state.topics[id],
+                title,
+                description,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }));
+        } catch (error) {
+          console.error("Failed to update topic:", error);
+        }
+      },
+      
+      updateTopicContent: async (id, content) => {
+        try {
+          const topic = get().topics[id];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            await fbUpdateTopicContent(topic.subjectId, id, content);
+          } else {
+            const updatedTopic: Topic = {
+              ...topic,
+              content,
+              updatedAt: new Date().toISOString(),
+            };
+            
+            saveTopic(updatedTopic);
+          }
+          
+          set((state) => ({
+            topics: {
+              ...state.topics,
+              [id]: {
+                ...state.topics[id],
+                content,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }));
+        } catch (error) {
+          console.error("Failed to update topic content:", error);
+        }
+      },
+      
+      deleteTopic: async (id) => {
+        try {
+          const topic = get().topics[id];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            await fbDeleteTopic(topic.subjectId, id);
+          } else {
+            await deleteTopicFiles(topic.id);
+            
+            const subject = get().subjects[topic.subjectId];
+            if (subject) {
+              const updatedSubject: Subject = {
+                ...subject,
+                topicOrder: (subject.topicOrder || []).filter(topicId => topicId !== id),
+                updatedAt: new Date().toISOString(),
+              };
+              saveSubject(updatedSubject);
+            }
+          }
+          
+          set((state) => {
+            const { [id]: _, ...remainingTopics } = state.topics;
+            
+            const subtopicIdsToRemove = Object.values(state.subtopics)
+              .filter(subtopic => subtopic.topicId === id)
+              .map(subtopic => subtopic.id);
+            
+            const remainingSubtopics = { ...state.subtopics };
+            subtopicIdsToRemove.forEach(subtopicId => {
+              delete remainingSubtopics[subtopicId];
+            });
+            
+            const newCurrentTopicId = state.currentTopicId === id
+              ? null
+              : state.currentTopicId;
+            
+            const newCurrentSubtopicId = subtopicIdsToRemove.includes(state.currentSubtopicId || '')
+              ? null
+              : state.currentSubtopicId;
+            
+            const updatedSubjects = { ...state.subjects };
+            if (topic && updatedSubjects[topic.subjectId]) {
+              updatedSubjects[topic.subjectId] = {
+                ...updatedSubjects[topic.subjectId],
+                topicOrder: (updatedSubjects[topic.subjectId].topicOrder || [])
+                  .filter(topicId => topicId !== id),
+              };
+            }
+            
+            return {
+              topics: remainingTopics,
+              subtopics: remainingSubtopics,
+              subjects: updatedSubjects,
+              currentTopicId: newCurrentTopicId,
+              currentSubtopicId: newCurrentSubtopicId,
+            };
+          });
+        } catch (error) {
+          console.error("Failed to delete topic:", error);
+        }
+      },
+      
+      reorderSubtopics: async (topicId, subtopicOrder) => {
+        try {
+          const topic = get().topics[topicId];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            // Call the Firebase service function
+            await fbReorderSubtopics(topic.subjectId, topicId, subtopicOrder);
+          }
+          
+          // Update local state
+          set((state) => ({
+            topics: {
+              ...state.topics,
+              [topicId]: {
+                ...state.topics[topicId],
+                subtopicOrder,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }));
+          
+          // Save to local storage if not using Firebase
+          if (!get().useFirebase) {
+            const topic = get().topics[topicId];
+            if (topic) {
+              saveTopic({
+                ...topic,
+                subtopicOrder,
+                updatedAt: new Date().toISOString(),
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Failed to reorder subtopics:", error);
+        }
+      },
+      
+      addSubtopic: async (topicId, title, description = '') => {
+        try {
+          const topic = get().topics[topicId];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            const newSubtopic = await fbAddSubtopic(topic.subjectId, topicId, title);
+            
+            set((state) => ({
+              subtopics: {
+                ...state.subtopics,
+                [newSubtopic.id]: newSubtopic as Subtopic,
+              },
+              currentSubtopicId: newSubtopic.id,
+            }));
+          } else {
+            const id = nanoid();
+            const timestamp = new Date().toISOString();
+            
+            const newSubtopic: Subtopic = {
+              id,
+              topicId,
+              title,
+              content: '',
+              status: 'not-started',
+              completionPercentage: 0,
+              notes: '',
+              order: Object.values(get().subtopics).filter(s => s.topicId === topicId).length,
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            };
+            
+            saveSubtopic(newSubtopic);
+            
+            set((state) => ({
+              subtopics: {
+                ...state.subtopics,
+                [id]: newSubtopic,
+              },
+              currentSubtopicId: id,
+            }));
+          }
+        } catch (error) {
+          console.error("Failed to add subtopic:", error);
+        }
+      },
+      
+      updateSubtopic: async (id, title, description = '') => {
+        try {
+          const subtopic = get().subtopics[id];
+          if (!subtopic) return;
+          
+          const topic = get().topics[subtopic.topicId];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            await fbUpdateSubtopic(topic.subjectId, subtopic.topicId, id, title);
+          } else {
+            const updatedSubtopic: Subtopic = {
+              ...subtopic,
+              title,
+              updatedAt: new Date().toISOString(),
+            };
+            
+            saveSubtopic(updatedSubtopic);
+          }
+          
+          set((state) => ({
+            subtopics: {
+              ...state.subtopics,
+              [id]: {
+                ...state.subtopics[id],
+                title,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }));
+        } catch (error) {
+          console.error("Failed to update subtopic:", error);
+        }
+      },
+      
+      updateSubtopicContent: async (id, content) => {
+        try {
+          const subtopic = get().subtopics[id];
+          if (!subtopic) return;
+          
+          const topic = get().topics[subtopic.topicId];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            await fbUpdateSubtopicContent(topic.subjectId, subtopic.topicId, id, content);
+          } else {
+            const updatedSubtopic: Subtopic = {
+              ...subtopic,
+              content,
+              updatedAt: new Date().toISOString(),
+            };
+            
+            saveSubtopic(updatedSubtopic);
+          }
+          
+          set((state) => ({
+            subtopics: {
+              ...state.subtopics,
+              [id]: {
+                ...state.subtopics[id],
+                content,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }));
+        } catch (error) {
+          console.error("Failed to update subtopic content:", error);
+        }
+      },
+      
+      updateSubtopicProgress: async (id, status, completionPercentage) => {
+        try {
+          const subtopic = get().subtopics[id];
+          if (!subtopic) return;
+          
+          const topic = get().topics[subtopic.topicId];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            await updateSubtopicStatus(topic.subjectId, subtopic.topicId, id, status, completionPercentage);
+          } else {
+            const updatedSubtopic: Subtopic = {
+              ...subtopic,
+              status,
+              completionPercentage,
+              updatedAt: new Date().toISOString(),
+            };
+            
+            saveSubtopic(updatedSubtopic);
+          }
+          
+          set((state) => ({
+            subtopics: {
+              ...state.subtopics,
+              [id]: {
+                ...state.subtopics[id],
+                status,
+                completionPercentage,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          }));
+        } catch (error) {
+          console.error("Failed to update subtopic progress:", error);
+        }
+      },
+      
+      deleteSubtopic: async (id) => {
+        try {
+          const subtopic = get().subtopics[id];
+          if (!subtopic) return;
+          
+          const topic = get().topics[subtopic.topicId];
+          if (!topic) return;
+          
+          if (get().useFirebase) {
+            await fbDeleteSubtopic(topic.subjectId, subtopic.topicId, id);
+          } else {
+            await deleteSubtopicFiles(subtopic.id);
+          }
+          
+          set((state) => {
+            const { [id]: _, ...remainingSubtopics } = state.subtopics;
+            
+            const newCurrentSubtopicId = state.currentSubtopicId === id
+              ? null
+              : state.currentSubtopicId;
+            
+            return {
+              subtopics: remainingSubtopics,
+              currentSubtopicId: newCurrentSubtopicId,
+            };
+          });
+        } catch (error) {
+          console.error("Failed to delete subtopic:", error);
+        }
+      },
+    }),
+    {
+      name: "learnit-firebase-store",
+      partialize: (state) => ({
+        subjects: state.subjects,
+        topics: state.topics,
+        subtopics: state.subtopics,
+        currentSubjectId: state.currentSubjectId,
+        currentTopicId: state.currentTopicId,
+        currentSubtopicId: state.currentSubtopicId,
+        useFirebase: state.useFirebase,
+      }),
+    }
+  )
+)
+
 export const useStore = create<Store>()(
   persist(
     (set, get) => ({
@@ -76,6 +726,7 @@ export const useStore = create<Store>()(
       currentSubjectId: null,
       currentTopicId: null,
       currentSubtopicId: null,
+      useFirebase: false,
       
       // Initialize by loading from browser storage
       hydrate: async () => {
@@ -91,7 +742,7 @@ export const useStore = create<Store>()(
         }
       },
       
-      addSubject: (title, description) => {
+      addSubject: async (title, description) => {
         const id = nanoid()
         const timestamp = new Date().toISOString()
         
@@ -118,7 +769,7 @@ export const useStore = create<Store>()(
         }))
       },
       
-      updateSubject: (id, title, description) => {
+      updateSubject: async (id, title, description) => {
         set((state) => {
           if (!state.subjects[id]) return state;
           
@@ -141,7 +792,7 @@ export const useStore = create<Store>()(
         })
       },
       
-      deleteSubject: (id) => {
+      deleteSubject: async (id) => {
         set((state) => {
           if (!state.subjects[id]) return state;
           
@@ -149,19 +800,19 @@ export const useStore = create<Store>()(
           const newSubjects = { ...state.subjects }
           delete newSubjects[id];
           
-          // Delete subject from browser storage
-          deleteSubjectFiles(id);
-          
           return {
             subjects: newSubjects,
             currentSubjectId: null,
             currentTopicId: null,
             currentSubtopicId: null,
           }
-        })
+        });
+
+        // Delete subject from browser storage
+        await deleteSubjectFiles(id);
       },
       
-      reorderTopics: (subjectId, topicOrder) => {
+      reorderTopics: async (subjectId, topicOrder) => {
         set((state) => {
           const subject = state.subjects[subjectId];
           if (!subject) return state;
@@ -181,10 +832,10 @@ export const useStore = create<Store>()(
               [subjectId]: updatedSubject,
             },
           }
-        })
+        });
       },
       
-      addTopic: (subjectId, title, description) => {
+      addTopic: async (subjectId, title, description) => {
         set((state) => {
           const subject = state.subjects[subjectId];
           if (!subject) return state;
@@ -227,7 +878,7 @@ export const useStore = create<Store>()(
         })
       },
       
-      updateTopic: (id, title, description) => {
+      updateTopic: async (id, title, description) => {
         set((state) => {
           const topic = state.topics[id];
           if (!topic) return state;
@@ -251,7 +902,7 @@ export const useStore = create<Store>()(
         })
       },
       
-      deleteTopic: (id) => {
+      deleteTopic: async (id) => {
         set((state) => {
           const topic = state.topics[id];
           if (!topic) return state;
@@ -269,10 +920,6 @@ export const useStore = create<Store>()(
             updatedAt: new Date().toISOString(),
           }
           
-          // Delete topic from browser storage
-          deleteTopicFiles(id);
-          saveSubject(updatedSubject);
-          
           return {
             topics: newTopics,
             subjects: {
@@ -282,10 +929,24 @@ export const useStore = create<Store>()(
             currentTopicId: null,
             currentSubtopicId: null,
           }
-        })
+        });
+        // Delete topic from browser storage
+        await deleteTopicFiles(id);
+        const topic = get().topics[id];
+        if (topic) {
+          const subject = get().subjects[topic.subjectId];
+          if (subject) {
+            const updatedSubject = {
+              ...subject,
+              topicOrder: subject.topicOrder.filter(topicId => topicId !== id),
+              updatedAt: new Date().toISOString(),
+            };
+            saveSubject(updatedSubject);
+          }
+        }
       },
       
-      updateTopicContent: (id, content) => {
+      updateTopicContent: async (id, content) => {
         set((state) => {
           const topic = state.topics[id];
           if (!topic) return state;
@@ -308,7 +969,7 @@ export const useStore = create<Store>()(
         })
       },
       
-      reorderSubtopics: (topicId, subtopicOrder) => {
+      reorderSubtopics: async (topicId, subtopicOrder) => {
         set((state) => {
           const topic = state.topics[topicId];
           if (!topic) return state;
@@ -328,10 +989,10 @@ export const useStore = create<Store>()(
               [topicId]: updatedTopic,
             },
           }
-        })
+        });
       },
       
-      addSubtopic: (topicId, title, description) => {
+      addSubtopic: async (topicId, title, description) => {
         set((state) => {
           const topic = state.topics[topicId];
           if (!topic) return state;
@@ -341,7 +1002,7 @@ export const useStore = create<Store>()(
           
           const updatedTopic = {
             ...topic,
-            subtopicOrder: [...topic.subtopicOrder, id],
+            subtopicOrder: [...(topic.subtopicOrder || []), id],
             updatedAt: timestamp,
           }
           
@@ -370,10 +1031,10 @@ export const useStore = create<Store>()(
             },
             currentSubtopicId: id,
           }
-        })
+        });
       },
       
-      updateSubtopic: (id, title, description) => {
+      updateSubtopic: async (id, title, description) => {
         set((state) => {
           const subtopic = state.subtopics[id];
           if (!subtopic) return state;
@@ -397,7 +1058,7 @@ export const useStore = create<Store>()(
         })
       },
       
-      deleteSubtopic: (id) => {
+      deleteSubtopic: async (id) => {
         set((state) => {
           const subtopic = state.subtopics[id];
           if (!subtopic) return state;
@@ -411,13 +1072,9 @@ export const useStore = create<Store>()(
           
           const updatedTopic = {
             ...topic,
-            subtopicOrder: topic.subtopicOrder.filter(subtopicId => subtopicId !== id),
+            subtopicOrder: (topic.subtopicOrder ?? []).filter(subtopicId => subtopicId !== id),
             updatedAt: new Date().toISOString(),
           }
-          
-          // Delete subtopic from browser storage
-          deleteSubtopicFiles(id);
-          saveTopic(updatedTopic);
           
           return {
             subtopics: newSubtopics,
@@ -427,10 +1084,24 @@ export const useStore = create<Store>()(
             },
             currentSubtopicId: null,
           }
-        })
+        });
+        // Delete subtopic from browser storage
+        await deleteSubtopicFiles(id);
+        const subtopic = get().subtopics[id];
+        if (subtopic) {
+          const topic = get().topics[subtopic.topicId];
+          if (topic) {
+            const updatedTopic = {
+              ...topic,
+              subtopicOrder: (topic.subtopicOrder ?? []).filter(subtopicId => subtopicId !== id),
+              updatedAt: new Date().toISOString(),
+            };
+            saveTopic(updatedTopic);
+          }
+        }
       },
       
-      updateSubtopicContent: (id, content) => {
+      updateSubtopicContent: async (id, content) => {
         set((state) => {
           const subtopic = state.subtopics[id];
           if (!subtopic) return state;
@@ -453,30 +1124,58 @@ export const useStore = create<Store>()(
         })
       },
       
-      setCurrentSubject: (id) => {
+      setCurrentSubject: async (id) => {
         set({
           currentSubjectId: id,
           currentTopicId: null,
           currentSubtopicId: null,
-        })
+        });
       },
       
-      setCurrentTopic: (id) => {
+      setCurrentTopic: async (id) => {
         set({
           currentTopicId: id,
           currentSubtopicId: null,
-        })
+        });
       },
-      
-      setCurrentSubtopic: (id) => {
+      setCurrentSubtopic: async (id) => {
         set({
           currentSubtopicId: id,
-        })
+        });
+      },
+      
+      updateSubtopicProgress: async (id, status, completionPercentage) => {
+        set((state) => {
+          const subtopic = state.subtopics[id];
+          if (!subtopic) return state;
+          
+          const updatedSubtopic = {
+            ...subtopic,
+            status,
+            completionPercentage,
+            updatedAt: new Date().toISOString(),
+          }
+          
+          // Save to browser storage
+          saveSubtopic(updatedSubtopic);
+          
+          return {
+            subtopics: {
+              ...state.subtopics,
+              [id]: updatedSubtopic,
+            },
+          }
+        });
+      },
+      
+      setUseFirebase: (value: boolean) => {
+        set({ useFirebase: value });
       },
       
     }),
     {
       name: "learnit-storage",
     }
+    
   )
 )

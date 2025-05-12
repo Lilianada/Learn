@@ -323,7 +323,7 @@ export const useStore = create<Store>()(
           
           const updatedTopic = {
             ...topic,
-            subtopicOrder: [...topic.subtopicOrder, id],
+            subtopicOrder: [...(topic.subtopicOrder || []), id],
             updatedAt: timestamp,
           }
           
@@ -393,7 +393,7 @@ export const useStore = create<Store>()(
           
           const updatedTopic = {
             ...topic,
-            subtopicOrder: topic.subtopicOrder.filter(subtopicId => subtopicId !== id),
+            subtopicOrder: (topic.subtopicOrder || []).filter(subtopicId => subtopicId !== id),
             updatedAt: new Date().toISOString(),
           }
           
