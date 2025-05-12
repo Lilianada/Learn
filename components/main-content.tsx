@@ -242,7 +242,6 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
     contentTitle = subject.title
 
     // Format subject dates
-    const createdAt = formatDate(subject.createdAt);
     const updatedAt = formatDate(subject.updatedAt);
     
     content = (
@@ -252,9 +251,6 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
             <h2 className="text-lg font-medium">{subject.title}</h2>
           </div>
           <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
-            <div>
-              <span className="font-medium">Created:</span> {createdAt}
-            </div>
             <div>
               <span className="font-medium">Last edited:</span> {updatedAt}
             </div>
@@ -282,12 +278,8 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
                       )}
                     </div>
                     <div className="flex text-xs text-muted-foreground mt-1">
-                      <span className="mr-3">
-                        <span className="font-medium">Created:</span> {formatDate(topic.createdAt)}
-                      </span>
-                      <span>
                         <span className="font-medium">Updated:</span> {formatDate(topic.updatedAt)}
-                      </span>
+                   
                     </div>
                   </div>
                 </Button>
@@ -297,7 +289,7 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
             <div className="text-muted-foreground text-center py-8">No topics yet. Create one to get started!</div>
           )}
         </div>
-        <div className="mt-6">
+        <div className="mt-6 mx-auto">
           <Button onClick={() => setAddTopicOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
             Add Topic

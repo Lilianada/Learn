@@ -19,7 +19,7 @@ interface HeaderProps {
 }
 
 export function Header({ children }: HeaderProps) {
-  const { firebaseEnabled, user, signIn, signOut } = useAuth();
+  const { firebaseEnabled} = useAuth();
   
   // Use the appropriate store based on Firebase enablement
   const store = firebaseEnabled ? useFirebaseStore() : useStore();
@@ -115,36 +115,6 @@ export function Header({ children }: HeaderProps) {
             </TooltipTrigger>
             <TooltipContent>Export</TooltipContent>
           </Tooltip>
-
-          {firebaseEnabled && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  onClick={() => user ? signOut() : signIn()}
-                  aria-label={user ? "Sign out" : "Sign in"}
-                  tabIndex={0}
-                  className="text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                >
-                  {user ? (
-                    <>
-                      <LogOut className="h-4 w-4" />
-                      <span className="hidden sm:inline">Sign Out</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="h-4 w-4" />
-                      <span className="hidden sm:inline">Sign In</span>
-                    </>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {user ? "Sign Out" : "Sign In"}
-              </TooltipContent>
-            </Tooltip>
-          )}
-
           <SettingsMenu />
         </div>
 

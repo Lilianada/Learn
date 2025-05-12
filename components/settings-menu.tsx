@@ -2,9 +2,11 @@
 
 import { EllipsisVertical, LogIn, LogOut } from "lucide-react"
 import { useTheme as useNextTheme } from "next-themes"
+import { useStore } from "@/store/use-store"
 import { useSettings} from "@/store/use-settings"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { useFirebaseStore } from "@/store/use-firebase-store"
 import { useAuth } from "@/lib/auth-context"
 import {
   DropdownMenu,
@@ -21,9 +23,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 export function SettingsMenu() {
   const { setTheme: setNextTheme } = useNextTheme()
   const { fontFamily, fontSize, theme, setFontFamily, setFontSize, setTheme } = useSettings()
-  const { user, signIn, signOut, loading } = useAuth()
+  const { firebaseEnabled, user, signIn, signOut, loading } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [open, setOpen] = useState(false)
+    
+    // Use the appropriate store based on Firebase enablement
+    const store = firebaseEnabled ? useFirebaseStore() : useStore();
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -186,17 +191,34 @@ export function SettingsMenu() {
               }}
               className="mt-2"
             >
-              {user ? (
-                <>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign Out</span>
-                </>
-              ) : (
-                <>
-                  <LogIn className="mr-2 h-4 w-4" />
-                  <span>Sign In</span>
-                </>
-              )}
+                 {firebaseEnabled && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => user ? signOut() : signIn()}
+                  aria-label={user ? "Sign out" : "Sign in"}
+                  tabIndex={0}
+                  className="text-gray-700 dark:text-gray-300 flex items-center gap-2"
+                >
+                  {user ? (
+                    <>
+                      <LogOut className="h-4 w-4" />
+                      <span className="hidden sm:inline">Sign Out</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4" />
+                      <span className="hidden sm:inline">Sign In</span>
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {user ? "Sign Out" : "Sign In"}
+              </TooltipContent>
+            </Tooltip>
+          )}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

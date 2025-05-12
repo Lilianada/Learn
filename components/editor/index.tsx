@@ -228,7 +228,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
       <div>
         <EditorContent 
           editor={editor} 
-          className="py-4 focus:outline-none prose prose-sm sm:prose max-w-none dark:prose-invert border-none editor-borderless" 
+          className="min-h-screen py-4 focus:outline-none prose prose-sm sm:prose max-w-none dark:prose-invert border-none editor-borderless" 
         />
       </div>
     </div>
