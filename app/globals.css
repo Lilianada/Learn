@@ -67,6 +67,38 @@
 }
 
 @layer base {
+  :root {
+    /* Base font size - this will be your "medium" or "0" setting */
+    --base-font-size: 16px;
+    
+    /* Font size variations */
+    --font-size-small: calc(var(--base-font-size) - 2px); /* 14px */
+    --font-size-medium: var(--base-font-size);            /* 16px */
+    --font-size-large: calc(var(--base-font-size) + 2px); /* 18px */
+  }
+
+  /* Font family settings */
+  html[data-font-family="sans"] {
+    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  
+  html[data-font-family="mono"] {
+    font-family: var(--font-mono), monospace;
+  }
+  
+  /* Font size settings */
+  html[data-font-size="small"] {
+    font-size: var(--font-size-small);
+  }
+  
+  html[data-font-size="medium"] {
+    font-size: var(--font-size-medium);
+  }
+  
+  html[data-font-size="large"] {
+    font-size: var(--font-size-large);
+  }
+
   * {
     @apply border-border;
   }
