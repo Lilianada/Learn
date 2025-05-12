@@ -1,11 +1,11 @@
 
 /* Font families */
 [data-font-family="sans"] {
-  --font-family: 'Geist Sans', system-ui, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 [data-font-family="mono"] {
-  --font-family: 'Geist Mono', monospace;
+  font-family: var(--font-geist-mono), monospace;
 }
 
 /* Font sizes */
@@ -59,7 +59,8 @@ html.warm {
 
 /* Apply font settings */
 body {
-  font-family: var(--font-family, system-ui, sans-serif);
+  /* Use the value from the html element (controlled by data-font-family) */
+  font-family: inherit; 
   font-size: var(--font-size-base, 14px);
 }
 

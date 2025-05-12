@@ -79,11 +79,11 @@
 
   /* Font family settings */
   html[data-font-family="sans"] {
-    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
   
   html[data-font-family="mono"] {
-    font-family: var(--font-mono), monospace;
+    font-family: var(--font-geist-mono), monospace;
   }
   
   /* Font size settings */
