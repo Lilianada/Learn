@@ -1,16 +1,16 @@
 "use client"
 
-import { useStore } from "@/store/use-store"
-import { useFirebaseStore } from "@/store/use-firebase-store"
-import { useAuth } from "@/lib/auth-context"
+import { useStore } from "../store/use-store"
+import { useFirebaseStore } from "../store/use-firebase-store"
+import { useAuth } from "../lib/auth-context"
 import { ChevronDown, ChevronRight, File, Folder, FolderOpen, MoreHorizontal, Plus } from "lucide-react"
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { DialogForm } from "@/components/ui/dialog-form"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
+import { Button } from "./ui/button"
+import { cn } from "../lib/utils"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { DialogForm } from "./ui/dialog-form"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
+import { ConfirmationDialog } from "./ui/confirmation-dialog"
 
 interface SidebarProps {
   open: boolean
@@ -18,10 +18,10 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
-  const { firebaseEnabled } = useAuth();
+  const { firebaseEnabled, user } = useAuth();
   
-  // Use the appropriate store based on Firebase enablement
-  const store = firebaseEnabled ? useFirebaseStore() : useStore();
+  // Use the appropriate store based on authentication state
+  const store = user && firebaseEnabled ? useFirebaseStore() : useStore();
   
   const {
     subjects,

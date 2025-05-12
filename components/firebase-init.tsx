@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '../lib/auth-context';
 import { 
   fetchSubjects, 
   fetchTopics, 
   fetchSubtopics,
   fetchUserPreferences
-} from '@/lib/firebase-service';
-import { useFirebaseStore } from '@/store/use-firebase-store';
-import { useSettings } from '@/store/use-settings';
+} from '../lib/firebase-service';
+import { useFirebaseStore } from '../store/use-firebase-store';
+import { useSettings } from '../store/use-settings';
 
 export function FirebaseInit() {
   const { user, isAdmin, firebaseEnabled } = useAuth();

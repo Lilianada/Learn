@@ -14,7 +14,7 @@ import {
   Firestore
 } from 'firebase/firestore';
 import { db as firebaseDB, Timestamp } from './firebase';
-import { Subject, Topic, Subtopic } from '@/types/store-types';
+import { Subject, Topic, Subtopic } from '../types/store-types';
 
 // Ensure Firestore db is available
 if (!firebaseDB) {

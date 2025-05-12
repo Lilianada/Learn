@@ -2,12 +2,12 @@
 
 import { EllipsisVertical, LogIn, LogOut } from "lucide-react";
 import { useTheme as useNextTheme } from "next-themes";
-import { useStore } from "@/store/use-store";
-import { useSettings } from "@/store/use-settings";
+import { useStore } from "../store/use-store";
+import { useSettings } from "../store/use-settings";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { useFirebaseStore } from "@/store/use-firebase-store";
-import { useAuth } from "@/lib/auth-context";
+import { Button } from "./ui/button";
+import { useFirebaseStore } from "../store/use-firebase-store";
+import { useAuth } from "../lib/auth-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,12 +17,12 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
-} from "@/components/ui/dropdown-menu";
+} from "./ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "./ui/tooltip";
 
 export function SettingsMenu() {
   const { setTheme: setNextTheme } = useNextTheme();
@@ -33,8 +33,8 @@ export function SettingsMenu() {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // Use the appropriate store based on Firebase enablement
-  const store = firebaseEnabled ? useFirebaseStore() : useStore();
+  // Use the appropriate store based on authentication state
+  const store = user && firebaseEnabled ? useFirebaseStore() : useStore();
 
   // Prevent hydration mismatch
   useEffect(() => {

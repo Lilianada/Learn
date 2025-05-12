@@ -1,18 +1,22 @@
 "use client"
 
-import { Sidebar } from "@/components/sidebar"
-import { MainContent } from "@/components/main-content"
-import { Header } from "@/components/header"
+import { Sidebar } from "./sidebar"
+import { MainContent } from "./main-content"
+import { Header } from "./header"
+import { SignInDialog } from "./sign-in-dialog"
+import { LoadingOverlay } from "./loading-overlay"
 import { useState, useEffect } from "react"
 import { Menu, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useMediaQuery } from "@/hooks/use-media-query"
-import { cn } from "@/lib/utils"
-import { StoreInitializer } from "@/components/store-initializer"
+import { Button } from "./ui/button"
+import { useMediaQuery } from "../hooks/use-media-query"
+import { cn } from "../lib/utils"
+import { StoreInitializer } from "./store-initializer"
+import { useAuth } from "../lib/auth-context"
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isDesktop = useMediaQuery("(min-width: 768px)")
+  const { user, loading } = useAuth()
 
   // Close sidebar when switching to desktop view
   useEffect(() => {
@@ -23,7 +27,9 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white dark:bg-background warm:bg-warm">
+      {loading && <LoadingOverlay />}
       <StoreInitializer />
+      <SignInDialog />
       <Header>
         {!isDesktop && (
           <Button

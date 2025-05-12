@@ -1,26 +1,26 @@
 "use client"
 
 import * as React from "react"
-import { useStore } from "@/store/use-store"
-import { useFirebaseStore } from "@/store/use-firebase-store"
-import { useAuth } from "@/lib/auth-context"
-import { Editor } from "@/components/editor"
-import { Button } from "@/components/ui/button"
+import { useStore } from "../store/use-store"
+import { useFirebaseStore } from "../store/use-firebase-store"
+import { useAuth } from "../lib/auth-context"
+import { Editor } from "./editor"
+import { Button } from "./ui/button"
 import { Plus } from "lucide-react"
 import { useState, useEffect } from "react"
-import { DialogForm } from "@/components/ui/dialog-form"
-import { cn } from "@/lib/utils"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { DialogForm } from "./ui/dialog-form"
+import { cn } from "../lib/utils"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
 
 interface MainContentProps {
   sidebarOpen: boolean
 }
 
 export function MainContent({ sidebarOpen }: MainContentProps) {
-  const { firebaseEnabled } = useAuth();
+  const { firebaseEnabled, user } = useAuth();
   
-  // Use the appropriate store based on Firebase enablement
-  const store = firebaseEnabled ? useFirebaseStore() : useStore();
+  // Choose the store based on authentication state
+  const store = user && firebaseEnabled ? useFirebaseStore() : useStore();
   
   // Helper function to format dates consistently across the component
   const formatDate = (dateString?: string) => {

@@ -2,27 +2,27 @@
 
 import type React from "react"
 
-import { SettingsMenu } from "@/components/settings-menu"
-import { Button } from "@/components/ui/button"
-import { useStore } from "@/store/use-store"
-import { useFirebaseStore } from "@/store/use-firebase-store"
-import { useAuth } from "@/lib/auth-context"
+import { SettingsMenu } from "./settings-menu"
+import { Button } from "./ui/button"
+import { useStore } from "../store/use-store"
+import { useFirebaseStore } from "../store/use-firebase-store"
+import { useAuth } from "../lib/auth-context"
 import { Download, LogIn, LogOut, Plus } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { exportToPDF, exportToMarkdown } from "@/lib/export"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { exportToPDF, exportToMarkdown } from "../lib/export"
 import { useState } from "react"
-import { DialogForm } from "@/components/ui/dialog-form"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { DialogForm } from "./ui/dialog-form"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 
 interface HeaderProps {
   children?: React.ReactNode
 }
 
 export function Header({ children }: HeaderProps) {
-  const { firebaseEnabled} = useAuth();
+  const { firebaseEnabled, user } = useAuth();
   
-  // Use the appropriate store based on Firebase enablement
-  const store = firebaseEnabled ? useFirebaseStore() : useStore();
+  // Use the appropriate store based on Firebase enablement and auth state
+  const store = user && firebaseEnabled ? useFirebaseStore() : useStore();
   
   const { currentSubjectId, currentTopicId, currentSubtopicId, subjects, topics, subtopics, addSubject } = store;
   const [addSubjectOpen, setAddSubjectOpen] = useState(false)

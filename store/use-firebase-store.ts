@@ -20,8 +20,8 @@ import {
   updateSubtopicStatus,
   reorderTopics as fbReorderTopics,
   reorderSubtopics as fbReorderSubtopics
-} from '@/lib/firebase-service'
-import { Subject, Topic, Subtopic } from '@/types/store-types'
+} from '../lib/firebase-service'
+import { Subject, Topic, Subtopic } from '../types/store-types'
 import { 
   saveSubject, 
   saveTopic, 
