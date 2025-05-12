@@ -22,7 +22,7 @@ export function AppLayout() {
   }, [isDesktop])
 
   return (
-    <div className="flex h-screen flex-col bg-white dark:bg-background">
+    <div className="flex min-h-screen flex-col bg-white dark:bg-background warm:bg-warm">
       <StoreInitializer />
       <Header>
         {!isDesktop && (

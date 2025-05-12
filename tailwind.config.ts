@@ -19,6 +19,15 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
+      },
+      fontSize: {
+        'small': 'var(--font-size-small)',
+        'medium': 'var(--font-size-medium)',
+        'large': 'var(--font-size-large)',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
