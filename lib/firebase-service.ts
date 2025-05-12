@@ -10,10 +10,19 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  setDoc
+  setDoc,
+  Firestore
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db as firebaseDB, Timestamp } from './firebase';
 import { Subject, Topic, Subtopic } from '@/types/store-types';
+
+// Ensure Firestore db is available
+if (!firebaseDB) {
+  throw new Error('Firestore database is not initialized');
+}
+
+// Cast to Firestore with proper type checking
+const db: Firestore = firebaseDB as Firestore;
 
 // Subject operations
 export async function fetchSubjects() {
@@ -230,6 +239,21 @@ export async function addSubtopic(subjectId: string, topicId: string, title: str
     notes: ''
   });
   
+  // Update the topic's subtopicOrder array to include the new subtopic
+  const topicRef = doc(db, 'subjects', subjectId, 'topics', topicId);
+  const topicSnapshot = await getDoc(topicRef);
+  
+  if (topicSnapshot.exists()) {
+    const topicData = topicSnapshot.data();
+    const currentSubtopicOrder = topicData.subtopicOrder || [];
+    
+    // Add the new subtopic ID to the subtopicOrder array
+    await updateDoc(topicRef, {
+      subtopicOrder: [...currentSubtopicOrder, newSubtopic.id],
+      updatedAt: timestamp
+    });
+  }
+  
   return {
     id: newSubtopic.id,
     topicId,
@@ -325,7 +349,7 @@ export async function fetchUserPreferences(userId: string) {
   
   return {
     theme: "light",
-    fontFamily: "sans-serif",
+    fontFamily: "sans",
     fontSize: "medium"
   };
 }
@@ -334,7 +358,7 @@ export async function updateUserPreferences(
   userId: string,
   preferences: {
     theme?: "light" | "dark" | "warm",
-    fontFamily?: "sans-serif" | "monospace",
+    fontFamily?: "sans" | "mono",
     fontSize?: "small" | "medium" | "large"
   }
 ) {
@@ -378,4 +402,24 @@ export async function initializeAdmin(email: string, displayName: string) {
     
     console.log(`Admin account created for ${email}`);
   }
+}
+
+export async function reorderTopics(subjectId: string, topicOrder: string[]) {
+  const subjectRef = doc(db, 'subjects', subjectId);
+  await updateDoc(subjectRef, {
+    topicOrder,
+    updatedAt: serverTimestamp()
+  });
+  
+  return { subjectId, topicOrder };
+}
+
+export async function reorderSubtopics(subjectId: string, topicId: string, subtopicOrder: string[]) {
+  const topicRef = doc(db, 'subjects', subjectId, 'topics', topicId);
+  await updateDoc(topicRef, {
+    subtopicOrder,
+    updatedAt: serverTimestamp()
+  });
+  
+  return { topicId, subtopicOrder };
 }
