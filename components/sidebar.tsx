@@ -1,6 +1,8 @@
 "use client"
 
 import { useStore } from "@/store/use-store"
+import { useFirebaseStore } from "@/store/use-firebase-store"
+import { useAuth } from "@/lib/auth-context"
 import { ChevronDown, ChevronRight, File, Folder, FolderOpen, MoreHorizontal, Plus } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -16,6 +18,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
+  const { firebaseEnabled } = useAuth();
+  
+  // Use the appropriate store based on Firebase enablement
+  const store = firebaseEnabled ? useFirebaseStore() : useStore();
+  
   const {
     subjects,
     topics,
@@ -34,7 +41,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     updateSubject,
     updateTopic,
     updateSubtopic,
-  } = useStore()
+  } = store
 
   const [expandedSubjects, setExpandedSubjects] = useState<Record<string, boolean>>({})
   const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>({})
@@ -74,7 +81,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     }
   }
 
-  const handleAddSubtopic = (title: string) => {
+  const handleAddSubtopic = (title: string) => {  
     if (currentTopicId) {
       addSubtopic(currentTopicId, title)
       setExpandedTopics((prev) => ({
@@ -146,6 +153,23 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     if (window.innerWidth < 768) {
       onClose()
     }
+  }
+
+  // Helper function to get subtopics for a topic
+  const getTopicSubtopics = (topicId: string) => {
+    const topic = topics[topicId];
+    if (!topic) return [];
+    
+    // If topic has subtopicOrder property and it's not empty, use it to order subtopics
+    if (topic.subtopicOrder && topic.subtopicOrder.length > 0) {
+      // Return subtopics in the order specified by subtopicOrder
+      return topic.subtopicOrder
+        .map(id => subtopics[id])
+        .filter(Boolean); // Filter out any undefined entries
+    }
+    
+    // Fallback: just filter by topicId (unordered)
+    return Object.values(subtopics).filter(subtopic => subtopic.topicId === topicId);
   }
 
   return (
@@ -248,6 +272,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 {subject.topicOrder.map((topicId) => {
                   const topic = topics[topicId]
                   if (!topic) return null
+                  
+                  // Get subtopics for this topic
+                  const topicSubtopics = getTopicSubtopics(topic.id);
+                  const hasSubtopics = topicSubtopics.length > 0;
 
                   return (
                     <div key={topic.id} className="space-y-1">
@@ -263,19 +291,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                           className="flex items-center gap-2 flex-1"
                           onClick={() => {
                             setCurrentTopic(topic.id)
-                            toggleTopic(topic.id)
+                            if (hasSubtopics) toggleTopic(topic.id)
                             handleItemClick()
                           }}
                         >
-                          <button className="p-1" aria-label={expandedTopics[topic.id] ? "Collapse topic" : "Expand topic"}>
-                            {expandedTopics[topic.id] ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </button>
+                          {hasSubtopics ? (
+                            <button className="p-1" aria-label={expandedTopics[topic.id] ? "Collapse topic" : "Expand topic"}>
+                              {expandedTopics[topic.id] ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </button>
+                          ) : (
+                            <div className="w-6"></div> 
+                          )}
+                          
                           <div className="flex items-center gap-1.5">
-                            {expandedTopics[topic.id] ? (
+                            {hasSubtopics && expandedTopics[topic.id] ? (
                               <FolderOpen className="h-4 w-4 shrink-0" />
                             ) : (
                               <Folder className="h-4 w-4 shrink-0" />
@@ -333,63 +366,58 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                         </div>
                       </div>
 
-                      {/* Subtopics */}
-                      {expandedTopics[topic.id] && (
+                      {/* Subtopics - only show if topic is expanded */}
+                      {hasSubtopics && expandedTopics[topic.id] && (
                         <div className="pl-7 pt-1 space-y-1">
-                          {topic.subtopicOrder.map((subtopicId) => {
-                            const subtopic = subtopics[subtopicId]
-                            if (!subtopic) return null
-
-                            return (
-                              <div
-                                key={subtopic.id}
-                                className={cn(
-                                  "flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer text-sm",
-                                  currentSubtopicId === subtopic.id
-                                    ? "bg-primary/10 text-primary dark:bg-primary/20"
-                                    : "hover:bg-muted/30 text-gray-700 dark:text-gray-300"
-                                )}
-                                onClick={() => {
-                                  setCurrentSubtopic(subtopic.id)
-                                  handleItemClick()
-                                }}
-                              >
-                                <div className="flex items-center gap-1.5">
-                                  <File className="h-4 w-4 shrink-0" />
-                                  <span className="truncate max-w-[130px]" title={subtopic.title}>
-                                    {subtopic.title}
-                                  </span>
-                                </div>
-
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={(e) => e.stopPropagation()}
-                                      aria-label="More options"
-                                    >
-                                      <MoreHorizontal className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                      onClick={() => openRenameDialog("subtopic", subtopic.id)}
-                                    >
-                                      Rename
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => openDeleteDialog("subtopic", subtopic.id)}
-                                      className="text-destructive"
-                                    >
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                          {topicSubtopics.map(subtopic => (
+                            <div
+                              key={subtopic.id}
+                              className={cn(
+                                "flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer text-sm",
+                                currentSubtopicId === subtopic.id
+                                  ? "bg-primary/10 text-primary dark:bg-primary/20"
+                                  : "hover:bg-muted/30 text-gray-700 dark:text-gray-300"
+                              )}
+                              onClick={() => {
+                                setCurrentSubtopic(subtopic.id)
+                                handleItemClick()
+                              }}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <File className="h-4 w-4 shrink-0" />
+                                <span className="truncate max-w-[130px]" title={subtopic.title}>
+                                  {subtopic.title}
+                                </span>
                               </div>
-                            )
-                          })}
+
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={(e) => e.stopPropagation()}
+                                    aria-label="More options"
+                                  >
+                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => openRenameDialog("subtopic", subtopic.id)}
+                                  >
+                                    Rename
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => openDeleteDialog("subtopic", subtopic.id)}
+                                    className="text-destructive"
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>

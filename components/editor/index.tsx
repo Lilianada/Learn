@@ -215,7 +215,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
   }
 
   return (
-    <div className="relative" ref={editorContainerRef}>
+    <div className="relative min-h-screen" ref={editorContainerRef}>
       {/* Floating formatting toolbar */}
       <FloatingToolbar 
         editor={editor}

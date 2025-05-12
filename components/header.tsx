@@ -5,7 +5,9 @@ import type React from "react"
 import { SettingsMenu } from "@/components/settings-menu"
 import { Button } from "@/components/ui/button"
 import { useStore } from "@/store/use-store"
-import { Download, Plus } from "lucide-react"
+import { useFirebaseStore } from "@/store/use-firebase-store"
+import { useAuth } from "@/lib/auth-context"
+import { Download, LogIn, LogOut, Plus } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { exportToPDF, exportToMarkdown } from "@/lib/export"
 import { useState } from "react"
@@ -17,7 +19,12 @@ interface HeaderProps {
 }
 
 export function Header({ children }: HeaderProps) {
-  const { currentSubjectId, currentTopicId, currentSubtopicId, subjects, topics, subtopics, addSubject } = useStore()
+  const { firebaseEnabled, user, signIn, signOut } = useAuth();
+  
+  // Use the appropriate store based on Firebase enablement
+  const store = firebaseEnabled ? useFirebaseStore() : useStore();
+  
+  const { currentSubjectId, currentTopicId, currentSubtopicId, subjects, topics, subtopics, addSubject } = store;
   const [addSubjectOpen, setAddSubjectOpen] = useState(false)
 
   const handleAddSubject = (title: string) => {
@@ -108,6 +115,35 @@ export function Header({ children }: HeaderProps) {
             </TooltipTrigger>
             <TooltipContent>Export</TooltipContent>
           </Tooltip>
+
+          {firebaseEnabled && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => user ? signOut() : signIn()}
+                  aria-label={user ? "Sign out" : "Sign in"}
+                  tabIndex={0}
+                  className="text-gray-700 dark:text-gray-300 flex items-center gap-2"
+                >
+                  {user ? (
+                    <>
+                      <LogOut className="h-4 w-4" />
+                      <span className="hidden sm:inline">Sign Out</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4" />
+                      <span className="hidden sm:inline">Sign In</span>
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {user ? "Sign Out" : "Sign In"}
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           <SettingsMenu />
         </div>

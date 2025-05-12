@@ -12,14 +12,14 @@ import { useFirebaseStore } from '@/store/use-firebase-store';
 import { useSettings } from '@/store/use-settings';
 
 export function FirebaseInit() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, firebaseEnabled } = useAuth();
   const [initialized, setInitialized] = useState(false);
-  const store = useStore();
+  const store = useFirebaseStore();
   const { setTheme, setFontFamily, setFontSize } = useSettings();
 
   useEffect(() => {
-    // Only run once after authentication is determined
-    if (!initialized && isAdmin && user) {
+    // Only run once after authentication is determined and Firebase is enabled
+    if (!initialized && isAdmin && user && firebaseEnabled) {
       const loadData = async () => {
         try {
           // Load subjects
@@ -40,12 +40,17 @@ export function FirebaseInit() {
             }
           }
           
-          // Update the store directly
+          // Update the store
           if (Object.keys(subjects).length > 0) {
-            useStore.setState({ 
+            // Enable Firebase mode first to prevent local storage operations
+            store.setUseFirebase(true);
+            
+            // Initialize the store with Firebase data
+            useFirebaseStore.setState({
               subjects,
               topics: allTopics,
-              subtopics: allSubtopics
+              subtopics: allSubtopics,
+              useFirebase: true // Make sure this flag is set in state
             });
           }
           

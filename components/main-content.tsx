@@ -2,12 +2,13 @@
 
 import * as React from "react"
 import { useStore } from "@/store/use-store"
+import { useFirebaseStore } from "@/store/use-firebase-store"
+import { useAuth } from "@/lib/auth-context"
 import { Editor } from "@/components/editor"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { useState, useEffect } from "react"
 import { DialogForm } from "@/components/ui/dialog-form"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
@@ -16,6 +17,30 @@ interface MainContentProps {
 }
 
 export function MainContent({ sidebarOpen }: MainContentProps) {
+  const { firebaseEnabled } = useAuth();
+  
+  // Use the appropriate store based on Firebase enablement
+  const store = firebaseEnabled ? useFirebaseStore() : useStore();
+  
+  // Helper function to format dates consistently across the component
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Unknown';
+    
+    // Try to parse the date string (handles both ISO strings and Firebase timestamps)
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
+  
   const {
     currentSubjectId,
     currentTopicId,
@@ -28,7 +53,7 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
     addSubtopic,
     updateTopicContent,
     updateSubtopicContent,
-  } = useStore()
+  } = store
 
   const [addSubjectOpen, setAddSubjectOpen] = useState(false)
   const [addTopicOpen, setAddTopicOpen] = useState(false)
@@ -67,16 +92,31 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
     const subtopic = subtopics[currentSubtopicId]
     const topic = topics[subtopic.topicId]
     const subject = topics[subtopic.topicId] ? subjects[topics[subtopic.topicId].subjectId] : null
+    const topicSubtopics = Object.values(subtopics).filter((s) => s.topicId === subtopic.topicId)
 
     contentTitle = subtopic.title
     currentContent = subtopic.content
 
+    // Get formatted dates for display
+    const createdAt = formatDate(subtopic.createdAt);
+    const updatedAt = formatDate(subtopic.updatedAt);
+    
     content = (
       <>
-        <div className="mb-4 flex items-center">
-          <h2 className="text-xl font-semibold flex-1">{subtopic.title}</h2>
-          <div className="text-muted-foreground text-sm">
-            {subject?.title} / {topic?.title} / {subtopic.title}
+        <div className="mb-4 flex flex-col">
+          <div className="flex items-center">
+            <h2 className="text-lg font-semibold flex-1">{subtopic.title}</h2>
+            <div className="text-muted-foreground text-sm">
+              {subject?.title} / {topic?.title} / {subtopic.title}
+            </div>
+          </div>
+          <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
+            <div>
+              <span className="font-medium">Created:</span> {createdAt}
+            </div>
+            <div>
+              <span className="font-medium">Last edited:</span> {updatedAt}
+            </div>
           </div>
         </div>
         <Editor
@@ -96,12 +136,25 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
 
     if (topicSubtopics.length === 0) {
       // No subtopics, allow editing the topic directly
+      const createdAt = formatDate(topic.createdAt);
+      const updatedAt = formatDate(topic.updatedAt);
+      
       content = (
         <>
-          <div className="mb-4 flex items-center">
-            <h2 className="text-xl font-semibold flex-1">{topic.title}</h2>
-            <div className="text-muted-foreground text-sm">
-              {subject?.title} / {topic.title}
+          <div className="mb-4 flex flex-col">
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold flex-1">{topic.title}</h2>
+              <div className="text-muted-foreground text-sm">
+                {subject?.title} / {topic.title}
+              </div>
+            </div>
+            <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
+              <div>
+                <span className="font-medium">Created:</span> {createdAt}
+              </div>
+              <div>
+                <span className="font-medium">Last edited:</span> {updatedAt}
+              </div>
             </div>
           </div>
           <Editor
@@ -112,12 +165,25 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
       )
     } else {
       // Show topic overview with links to subtopics
+      const createdAt = formatDate(topic.createdAt);
+      const updatedAt = formatDate(topic.updatedAt);
+      
       content = (
         <>
-          <div className="mb-6 flex items-center">
-            <h2 className="text-xl font-semibold flex-1">{topic.title}</h2>
-            <div className="text-muted-foreground text-sm">
-              {subject?.title} / {topic.title}
+          <div className="mb-6 flex flex-col">
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold flex-1">{topic.title}</h2>
+              <div className="text-muted-foreground text-sm">
+                {subject?.title} / {topic.title}
+              </div>
+            </div>
+            <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
+              <div>
+                <span className="font-medium">Created:</span> {createdAt}
+              </div>
+              <div>
+                <span className="font-medium">Last edited:</span> {updatedAt}
+              </div>
             </div>
           </div>
           <div className="grid gap-3">
@@ -145,6 +211,14 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
                       <span className="italic text-muted-foreground">No content yet</span>
                     )}
                   </div>
+                  <div className="flex text-xs text-muted-foreground mt-2">
+                    <span className="mr-3">
+                      <span className="font-medium">Created:</span> {formatDate(subtopic.createdAt)}
+                    </span>
+                    <span>
+                      <span className="font-medium">Updated:</span> {formatDate(subtopic.updatedAt)}
+                    </span>
+                  </div>
                 </div>
               </Button>
             ))}
@@ -167,10 +241,24 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
 
     contentTitle = subject.title
 
+    // Format subject dates
+    const createdAt = formatDate(subject.createdAt);
+    const updatedAt = formatDate(subject.updatedAt);
+    
     content = (
       <>
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold">{subject.title}</h2>
+        <div className="mb-6 flex flex-col">
+          <div className="flex items-center">
+            <h2 className="text-lg font-medium">{subject.title}</h2>
+          </div>
+          <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
+            <div>
+              <span className="font-medium">Created:</span> {createdAt}
+            </div>
+            <div>
+              <span className="font-medium">Last edited:</span> {updatedAt}
+            </div>
+          </div>
         </div>
         <div className="grid gap-3">
           {subjectTopics.length > 0 ? (
@@ -193,6 +281,14 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
                         <span className="italic">No subtopics yet</span>
                       )}
                     </div>
+                    <div className="flex text-xs text-muted-foreground mt-1">
+                      <span className="mr-3">
+                        <span className="font-medium">Created:</span> {formatDate(topic.createdAt)}
+                      </span>
+                      <span>
+                        <span className="font-medium">Updated:</span> {formatDate(topic.updatedAt)}
+                      </span>
+                    </div>
                   </div>
                 </Button>
               )
@@ -212,8 +308,8 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
   } else {
     // No selection, show welcome screen
     content = (
-      <div className="flex flex-col items-center justify-center h-full text-center">
-        <h2 className="text-2xl font-semibold mb-2">Welcome to LearnIt</h2>
+      <div className="flex flex-col items-center justify-center min-h-screen text-center">
+        <h2 className="text-xl font-semibold mb-2">Welcome to LearnIt</h2>
         <p className="text-muted-foreground mb-6 max-w-md">
           Create structured learning materials organized by subjects, topics, and subtopics.
         </p>
@@ -228,9 +324,9 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
   return (
     <>
       <main
-        className={cn("flex-1 overflow-y-auto p-6", sidebarOpen && "opacity-50 md:opacity-100")}
+        className={cn("flex-1 overflow-y-auto p-6 h-full", sidebarOpen && "opacity-50 md:opacity-100")}
       >
-        <div className="mx-auto max-w-3xl">{content}</div>
+        <div className="mx-auto max-w-3xl h-full">{content}</div>
       </main>
 
       {/* Dialog forms */}
