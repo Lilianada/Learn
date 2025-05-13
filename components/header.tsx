@@ -76,6 +76,18 @@ export function Header({ children }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* If user is signed in, show a green dot, if user needs to signin, show a red dot */}
+          {firebaseEnabled && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={`h-2 w-2 rounded-full ${user ? "bg-green-500" : "bg-red-500"}`}
+                  aria-label={user ? "Signed in" : "Not signed in"}
+                />
+              </TooltipTrigger>
+              <TooltipContent>{user ? "Signed in" : "Not signed in"}</TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

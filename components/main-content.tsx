@@ -1,46 +1,52 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useStore } from "../store/use-store"
-import { useFirebaseStore } from "../store/use-firebase-store"
-import { useAuth } from "../lib/auth-context"
-import { Editor } from "./editor"
-import { Button } from "./ui/button"
-import { Plus } from "lucide-react"
-import { useState, useEffect } from "react"
-import { DialogForm } from "./ui/dialog-form"
-import { cn } from "../lib/utils"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
+import * as React from "react";
+import { useStore } from "../store/use-store";
+import { useFirebaseStore } from "../store/use-firebase-store";
+import { useAuth } from "../lib/auth-context";
+import { Editor } from "./editor";
+import { Button } from "./ui/button";
+import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { DialogForm } from "./ui/dialog-form";
+import { cn } from "../lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 interface MainContentProps {
-  sidebarOpen: boolean
+  sidebarOpen: boolean;
 }
 
 export function MainContent({ sidebarOpen }: MainContentProps) {
   const { firebaseEnabled, user } = useAuth();
-  
+
   // Choose the store based on authentication state
   const store = user && firebaseEnabled ? useFirebaseStore() : useStore();
-  
+
   // Helper function to format dates consistently across the component
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Unknown';
-    
+    if (!dateString) return "Unknown";
+
     // Try to parse the date string (handles both ISO strings and Firebase timestamps)
     try {
       const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      return new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       }).format(date);
     } catch (e) {
-      return 'Invalid date';
+      return "Invalid date";
     }
   };
-  
+
   const {
     currentSubjectId,
     currentTopicId,
@@ -53,105 +59,103 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
     addSubtopic,
     updateTopicContent,
     updateSubtopicContent,
-  } = store
+  } = store;
 
-  const [addSubjectOpen, setAddSubjectOpen] = useState(false)
-  const [addTopicOpen, setAddTopicOpen] = useState(false)
-  const [addSubtopicOpen, setAddSubtopicOpen] = useState(false)
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
-  
+  const [addSubjectOpen, setAddSubjectOpen] = useState(false);
+  const [addTopicOpen, setAddTopicOpen] = useState(false);
+  const [addSubtopicOpen, setAddSubtopicOpen] = useState(false);
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const handleAddSubject = (title: string) => {
-    addSubject(title)
-  }
+    addSubject(title);
+  };
 
   const handleAddTopic = (title: string) => {
     if (!currentSubjectId) {
-      setErrorMessage("Please select a subject first")
-      setErrorDialogOpen(true)
-      return
+      setErrorMessage("Please select a subject first");
+      setErrorDialogOpen(true);
+      return;
     }
-    addTopic(currentSubjectId, title)
-  }
+    addTopic(currentSubjectId, title);
+  };
 
   const handleAddSubtopic = (title: string) => {
     if (!currentTopicId) {
-      setErrorMessage("Please select a topic first")
-      setErrorDialogOpen(true)
-      return
+      setErrorMessage("Please select a topic first");
+      setErrorDialogOpen(true);
+      return;
     }
-    addSubtopic(currentTopicId, title)
-  }
+    addSubtopic(currentTopicId, title);
+  };
 
-  let content: React.ReactElement | null = null
-  let currentContent = ""
-  let contentTitle = ""
+  let content: React.ReactElement | null = null;
+  let currentContent = "";
+  let contentTitle = "";
 
   if (currentSubtopicId && subtopics[currentSubtopicId]) {
     // Display subtopic content
-    const subtopic = subtopics[currentSubtopicId]
-    const topic = topics[subtopic.topicId]
-    const subject = topics[subtopic.topicId] ? subjects[topics[subtopic.topicId].subjectId] : null
-    const topicSubtopics = Object.values(subtopics).filter((s) => s.topicId === subtopic.topicId)
+    const subtopic = subtopics[currentSubtopicId];
+    const topic = topics[subtopic.topicId];
+    const subject = topics[subtopic.topicId]
+      ? subjects[topics[subtopic.topicId].subjectId]
+      : null;
+    const topicSubtopics = Object.values(subtopics).filter(
+      (s) => s.topicId === subtopic.topicId
+    );
 
-    contentTitle = subtopic.title
-    currentContent = subtopic.content
+    contentTitle = subtopic.title;
+    currentContent = subtopic.content;
 
     // Get formatted dates for display
-    const createdAt = formatDate(subtopic.createdAt);
     const updatedAt = formatDate(subtopic.updatedAt);
-    
+
     content = (
       <>
-        <div className="mb-4 flex flex-col">
-          <div className="flex items-center">
+        <div className="w-full mb-4 flex justify-between gap-4 flex-wrap sm:flex-row">
+          {/* <div className="flex items-center">
             <h2 className="text-lg font-semibold flex-1">{subtopic.title}</h2>
-            <div className="text-muted-foreground text-sm">
-              {subject?.title} / {topic?.title} / {subtopic.title}
-            </div>
+          </div> */}
+          <div className="text-muted-foreground text-sm">
+            {subject?.title} / {topic?.title} / {subtopic.title}
           </div>
-          <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
-            <div>
-              <span className="font-medium">Created:</span> {createdAt}
-            </div>
-            <div>
+          <div className=" text-xs text-muted-foreground mt-1 space-x-4">
               <span className="font-medium">Last edited:</span> {updatedAt}
-            </div>
           </div>
         </div>
         <Editor
           initialContent={subtopic.content}
-          onChange={(content) => updateSubtopicContent(currentSubtopicId, content)}
+          onChange={(content) =>
+            updateSubtopicContent(currentSubtopicId, content)
+          }
         />
       </>
-    )
+    );
   } else if (currentTopicId && topics[currentTopicId]) {
     // Display topic content or topic overview
-    const topic = topics[currentTopicId]
-    const subject = subjects[topic.subjectId]
-    const topicSubtopics = Object.values(subtopics).filter((s) => s.topicId === currentTopicId)
+    const topic = topics[currentTopicId];
+    const subject = subjects[topic.subjectId];
+    const topicSubtopics = Object.values(subtopics).filter(
+      (s) => s.topicId === currentTopicId
+    );
 
-    contentTitle = topic.title
-    currentContent = topic.content || ""
+    contentTitle = topic.title;
+    currentContent = topic.content || "";
 
     if (topicSubtopics.length === 0) {
       // No subtopics, allow editing the topic directly
-      const createdAt = formatDate(topic.createdAt);
       const updatedAt = formatDate(topic.updatedAt);
-      
+
       content = (
         <>
           <div className="mb-4 flex flex-col">
             <div className="flex items-center">
-              <h2 className="text-xl font-semibold flex-1">{topic.title}</h2>
+              {/* <h2 className="text-xl font-semibold flex-1">{topic.title}</h2> */}
               <div className="text-muted-foreground text-sm">
                 {subject?.title} / {topic.title}
               </div>
             </div>
             <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
-              <div>
-                <span className="font-medium">Created:</span> {createdAt}
-              </div>
               <div>
                 <span className="font-medium">Last edited:</span> {updatedAt}
               </div>
@@ -162,12 +166,11 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
             onChange={(content) => updateTopicContent(currentTopicId, content)}
           />
         </>
-      )
+      );
     } else {
       // Show topic overview with links to subtopics
-      const createdAt = formatDate(topic.createdAt);
       const updatedAt = formatDate(topic.updatedAt);
-      
+
       content = (
         <>
           <div className="mb-6 flex flex-col">
@@ -179,9 +182,6 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
             </div>
             <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
               <div>
-                <span className="font-medium">Created:</span> {createdAt}
-              </div>
-              <div>
                 <span className="font-medium">Last edited:</span> {updatedAt}
               </div>
             </div>
@@ -192,7 +192,9 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
                 key={subtopic.id}
                 variant="ghost"
                 className="justify-start h-auto py-3 px-4 minimal-button hover:no-underline"
-                onClick={() => useStore.getState().setCurrentSubtopic(subtopic.id)}
+                onClick={() =>
+                  useStore.getState().setCurrentSubtopic(subtopic.id)
+                }
               >
                 <div className="text-left">
                   <div className="font-medium">{subtopic.title}</div>
@@ -201,22 +203,23 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
                       <div
                         className="prose prose-sm max-w-none dark:prose-invert"
                         dangerouslySetInnerHTML={{
-                          __html: subtopic.content
-                            .replace(/<[^>]*>/g, " ")
-                            .substring(0, 150)
-                            .trim() + "...",
+                          __html:
+                            subtopic.content
+                              .replace(/<[^>]*>/g, " ")
+                              .substring(0, 150)
+                              .trim() + "...",
                         }}
                       />
                     ) : (
-                      <span className="italic text-muted-foreground">No content yet</span>
+                      <span className="italic text-muted-foreground">
+                        No content yet
+                      </span>
                     )}
                   </div>
                   <div className="flex text-xs text-muted-foreground mt-2">
-                    <span className="mr-3">
-                      <span className="font-medium">Created:</span> {formatDate(subtopic.createdAt)}
-                    </span>
                     <span>
-                      <span className="font-medium">Updated:</span> {formatDate(subtopic.updatedAt)}
+                      <span className="font-medium">Updated:</span>{" "}
+                      {formatDate(subtopic.updatedAt)}
                     </span>
                   </div>
                 </div>
@@ -230,20 +233,20 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
             </Button>
           </div>
         </>
-      )
+      );
     }
   } else if (currentSubjectId && subjects[currentSubjectId]) {
     // Display subject overview
-    const subject = subjects[currentSubjectId]
+    const subject = subjects[currentSubjectId];
     const subjectTopics = subject.topicOrder
       .map((id) => topics[id])
-      .filter(Boolean)
+      .filter(Boolean);
 
-    contentTitle = subject.title
+    contentTitle = subject.title;
 
     // Format subject dates
     const updatedAt = formatDate(subject.updatedAt);
-    
+
     content = (
       <>
         <div className="mb-6 flex flex-col">
@@ -259,7 +262,9 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
         <div className="grid gap-3">
           {subjectTopics.length > 0 ? (
             subjectTopics.map((topic) => {
-              const topicSubtopics = Object.values(subtopics).filter((s) => s.topicId === topic.id)
+              const topicSubtopics = Object.values(subtopics).filter(
+                (s) => s.topicId === topic.id
+              );
 
               return (
                 <Button
@@ -278,15 +283,17 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
                       )}
                     </div>
                     <div className="flex text-xs text-muted-foreground mt-1">
-                        <span className="font-medium">Updated:</span> {formatDate(topic.updatedAt)}
-                   
+                      <span className="font-medium">Updated:</span>{" "}
+                      {formatDate(topic.updatedAt)}
                     </div>
                   </div>
                 </Button>
-              )
+              );
             })
           ) : (
-            <div className="text-muted-foreground text-center py-8">No topics yet. Create one to get started!</div>
+            <div className="text-muted-foreground text-center py-8">
+              No topics yet. Create one to get started!
+            </div>
           )}
         </div>
         <div className="grid place-items-center">
@@ -296,27 +303,31 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
           </Button>
         </div>
       </>
-    )
+    );
   } else {
     // No selection, show welcome screen
     content = (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh_-_10rem)] text-center">
         <h2 className="text-xl font-semibold mb-2">Welcome to LearnIt</h2>
         <p className="text-muted-foreground mb-6 max-w-md">
-          Create structured learning materials organized by subjects, topics, and subtopics.
+          Create structured learning materials organized by subjects, topics,
+          and subtopics.
         </p>
         <Button onClick={() => setAddSubjectOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Create Your First Subject
         </Button>
       </div>
-    )
+    );
   }
 
   return (
     <>
       <main
-        className={cn("flex-1 overflow-y-auto p-6 h-full", sidebarOpen && "opacity-50 md:opacity-100")}
+        className={cn(
+          "flex-1 overflow-y-auto p-6 h-full",
+          sidebarOpen && "opacity-50 md:opacity-100"
+        )}
       >
         <div className="mx-auto max-w-3xl h-full">{content}</div>
       </main>
@@ -356,5 +367,5 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

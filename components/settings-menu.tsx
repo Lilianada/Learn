@@ -190,47 +190,6 @@ export function SettingsMenu() {
               </DropdownMenuPortal>
             </DropdownMenuSub>
 
-            <DropdownMenuItem
-              onClick={() => {
-                if (user) {
-                  signOut();
-                } else {
-                  signIn();
-                }
-                setOpen(false);
-              }}
-              className="mt-2"
-            >
-              {firebaseEnabled && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      disabled={isSigningIn}
-                      onClick={() => (user ? signOut() : signIn())}
-                      aria-label={user ? "Sign out" : "Sign in"}
-                      tabIndex={0}
-                      className="text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                    >
-                      {user ? (
-                        <>
-                          <LogOut className="h-4 w-4" />
-                          <span className="hidden sm:inline">Sign Out</span>
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="h-4 w-4" />
-                          <span className="hidden sm:inline">Sign In</span>
-                        </>
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {user ? "Sign Out" : "Sign In"}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TooltipTrigger>

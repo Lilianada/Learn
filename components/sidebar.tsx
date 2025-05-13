@@ -213,7 +213,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   ) : (
                     <Folder className="h-4 w-4 shrink-0" />
                   )}
-                  <span className="truncate max-w-[130px]" title={subject.title}>
+                  <span className="truncate max-w-[120px]" title={subject.title}>
                     {subject.title}
                   </span>
                 </div>
@@ -313,7 +313,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                             ) : (
                               <Folder className="h-4 w-4 shrink-0" />
                             )}
-                            <span className="truncate max-w-[130px]" title={topic.title}>
+                            <span className="truncate max-w-[100px]" title={topic.title}>
                               {topic.title}
                             </span>
                           </div>
@@ -385,7 +385,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                             >
                               <div className="flex items-center gap-1.5">
                                 <File className="h-4 w-4 shrink-0" />
-                                <span className="truncate max-w-[130px]" title={subtopic.title}>
+                                <span className="truncate max-w-[90px]" title={subtopic.title}>
                                   {subtopic.title}
                                 </span>
                               </div>

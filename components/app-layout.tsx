@@ -5,6 +5,7 @@ import { MainContent } from "./main-content"
 import { Header } from "./header"
 import { SignInDialog } from "./sign-in-dialog"
 import { LoadingOverlay } from "./loading-overlay"
+import { DebugButton } from "./debug-button"
 import { useState, useEffect } from "react"
 import { Menu, X } from "lucide-react"
 import { Button } from "./ui/button"
@@ -27,9 +28,10 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white dark:bg-background warm:bg-warm">
-      {loading && <LoadingOverlay />}
+     
       <StoreInitializer />
       <SignInDialog />
+      <DebugButton />
       <Header>
         {!isDesktop && (
           <Button
@@ -46,13 +48,19 @@ export function AppLayout() {
       <div className="flex flex-1 overflow-hidden">
         <div
           className={cn(
-            "transition-all duration-300 ease-in-out",
-            isDesktop ? "w-64" : sidebarOpen ? "w-full md:w-64" : "w-0",
+            "grid transition-all duration-300 ease-in-out",
+            isDesktop ? "grid-cols-4" : sidebarOpen ? "w-full" : "w-0",
           )}
         >
-          <Sidebar open={sidebarOpen || isDesktop} onClose={() => setSidebarOpen(false)} />
+          <div className={cn(
+            isDesktop ? "col-span-1" : sidebarOpen ? "w-full" : "w-0"
+          )}>
+            <Sidebar open={sidebarOpen || isDesktop} onClose={() => setSidebarOpen(false)} />
+          </div>
+          <div className="col-span-3">
+            <MainContent sidebarOpen={sidebarOpen && !isDesktop} />
+          </div>
         </div>
-        <MainContent sidebarOpen={sidebarOpen && !isDesktop} />
       </div>
     </div>
   )

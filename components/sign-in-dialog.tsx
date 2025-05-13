@@ -7,23 +7,22 @@ import { LogIn } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 
 export function SignInDialog() {
-  const [dialogOpen, setDialogOpen] = useState(true);
-  const { user, signIn, isSigningIn, firebaseEnabled } = useAuth();
+  const [userDismissedDialog, setUserDismissedDialog] = useState(false);
+  const { user, signIn, isSigningIn, firebaseEnabled, loading } = useAuth();
   
-  // Only show the dialog if Firebase is enabled, user is not authenticated AND dialogOpen is true
-  const shouldShowDialog = firebaseEnabled && !user && dialogOpen;
+  const shouldShowDialog = firebaseEnabled && !user && !userDismissedDialog && !loading;
   
   // Handle dialog close without signing in
   const handleOpenChange = (open: boolean) => {
-    // Allow closing the dialog
-    if (!open) setDialogOpen(false);
-    // But don't reopen it if closed
+    if (!open) {
+      setUserDismissedDialog(true);
+    }
   };
   
-  // Automatically close dialog when user authenticates
   useEffect(() => {
     if (user) {
-      setDialogOpen(false);
+      // Once user is authenticated, no need to show dialog
+      setUserDismissedDialog(false);
     }
   }, [user]);
   

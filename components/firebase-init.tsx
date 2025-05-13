@@ -15,7 +15,13 @@ export function FirebaseInit() {
   const { user, isAdmin, firebaseEnabled } = useAuth();
   const [initialized, setInitialized] = useState(false);
   const store = useFirebaseStore();
+  const setUseFirebase = useFirebaseStore((state: any) => state.setUseFirebase);
   const { setTheme, setFontFamily, setFontSize } = useSettings();
+
+  // Update useFirebase flag whenever auth state changes
+  useEffect(() => {
+    setUseFirebase(Boolean(user && firebaseEnabled));
+  }, [user, firebaseEnabled, setUseFirebase]);
 
   useEffect(() => {
     // Only run once after authentication is determined and Firebase is enabled
