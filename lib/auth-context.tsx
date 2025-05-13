@@ -43,67 +43,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [firebaseEnabled, setFirebaseEnabled] = useState(Boolean(firebaseAuth));
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  useEffect(() => {
-    // Clean up any stale auth state when the component mounts
-    sessionStorage.removeItem('auth_in_progress');
-    
-    // If Firebase auth is not initialized, skip auth state handling
-    if (!firebaseAuth || !firestore) {
-      console.warn("Firebase auth/db is not initialized - authentication features will be disabled");
-      setLoading(false);
-      return () => {};
-    }
+ useEffect(() => {
+  // Clean up any stale auth state when the component mounts
+  sessionStorage.removeItem('auth_in_progress');
+  
+  // If Firebase auth is not initialized, skip auth state handling
+  if (!firebaseAuth || !firestore) {
+    console.warn("Firebase auth/db is not initialized - authentication features will be disabled");
+    setLoading(false);
+    return () => {};
+  }
 
-    // Listen for auth state changes
-    const unsubscribe = firebaseAuth.onAuthStateChanged(async (authUser) => {
-      setUser(authUser);
-      setLoading(false);
-      
-      if (authUser) {
-        try {
-          // Check if user is admin
-          const adminRef = doc(firestore, 'admin', authUser.email || '');
-          const adminSnap = await getDoc(adminRef);
+  // Listen for auth state changes
+  const unsubscribe = firebaseAuth.onAuthStateChanged(async (authUser) => {
+    if (authUser) {
+      try {
+        // Use a single "learn" document to store all user data and settings
+        const learnDocRef = doc(firestore, 'learn', 'config');
+        const learnSnap = await getDoc(learnDocRef);
+        
+        if (learnSnap.exists()) {
+          const learnData = learnSnap.data();
           
-          if (adminSnap.exists()) {
+          // Check if current user is in the admins list
+          const admins = learnData.admins || {};
+          const isCurrentUserAdmin = admins[authUser.email || ''] === true;
+          
+          if (isCurrentUserAdmin) {
             setIsAdmin(true);
             
-            // Update lastLogin timestamp
-            await updateDoc(adminRef, {
-              lastLogin: serverTimestamp()
-            });
+            // Update the user's last activity within the learn document
+            const users = learnData.users || {};
+            const userData = users[authUser.uid] || {
+              displayName: authUser.displayName,
+              email: authUser.email,
+              createdAt: serverTimestamp()
+            };
             
-            // Update or create user document
-            const userRef = doc(firestore, 'users', authUser.uid);
-            const userSnap = await getDoc(userRef);
+            // Update user data
+            users[authUser.uid] = {
+              ...userData,
+              lastActive: serverTimestamp()
+            };
             
-            if (userSnap.exists()) {
-              await updateDoc(userRef, {
-                lastActive: serverTimestamp()
-              });
-            } else {
-              await setDoc(userRef, {
+            // Update the learn document with the latest user data
+            await updateDoc(learnDocRef, {
+              [`users.${authUser.uid}`]: {
                 displayName: authUser.displayName,
                 email: authUser.email,
-                photoURL: authUser.photoURL,
                 isAdmin: true,
-                preferences: {
-                  theme: "light",
-                  fontFamily: "sans",
-                  fontSize: 0  // Use number for the font size offset
-                },
-                createdAt: serverTimestamp(),
-                lastActive: serverTimestamp()
-              });
-            }
-            
-            // Create a session document
-            const sessionRef = doc(collection(firestore, 'sessions'));
-            await setDoc(sessionRef, {
-              email: authUser.email,
-              validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-              createdAt: serverTimestamp(),
-              userAgent: navigator.userAgent
+                lastActive: serverTimestamp(),
+                // Keep track of the latest session
+                currentSession: {
+                  startedAt: serverTimestamp(),
+                  userAgent: navigator.userAgent
+                }
+              }
             });
           } else {
             // Not an admin, sign them out
@@ -113,65 +108,101 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(null);
             setIsAdmin(false);
           }
-        } catch (error) {
-          console.error("Error checking admin status:", error);
-          setIsAdmin(false);
+        } else {
+          // The learn document doesn't exist yet - create it with this user as admin
+          // This is useful for first-time setup
+          await setDoc(learnDocRef, {
+            admins: {
+              [authUser.email || '']: true
+            },
+            users: {
+              [authUser.uid]: {
+                displayName: authUser.displayName,
+                email: authUser.email,
+                isAdmin: true,
+                createdAt: serverTimestamp(),
+                lastActive: serverTimestamp(),
+                currentSession: {
+                  startedAt: serverTimestamp(),
+                  userAgent: navigator.userAgent
+                }
+              }
+            },
+            settings: {
+              appTitle: 'LearnIt',
+              created: serverTimestamp()
+            }
+          });
+          
+          setIsAdmin(true);
         }
-      } else {
+        
+        // Set the user in state and finish loading regardless of admin status
+        setUser(authUser);
+      } catch (error) {
+        console.error("Error checking admin status:", error);
         setIsAdmin(false);
       }
-    });
+    } else {
+      // No user is signed in
+      setUser(null);
+      setIsAdmin(false);
+    }
     
-    return () => unsubscribe();
-  }, []);
+    // Always finish loading to prevent infinite spinner
+    setLoading(false);
+  });
+  
+  return () => unsubscribe();
+}, []);
 
   const signIn = async (): Promise<void> => {
-    // Prevent multiple sign-in attempts
-    if (isSigningIn) return;
+  // Prevent multiple sign-in attempts
+  if (isSigningIn) return;
+  
+  // Check if auth is already in progress via session storage
+  if (sessionStorage.getItem('auth_in_progress') === 'true') {
+    console.log('Auth already in progress, preventing duplicate popup');
+    return;
+  }
+  
+  if (!firebaseAuth || !firebaseGoogleProvider) {
+    console.error("Firebase auth is not initialized - cannot sign in");
+    return;
+  }
+  
+  try {
+    setIsSigningIn(true);
+    sessionStorage.setItem('auth_in_progress', 'true');
     
-    // Check if auth is already in progress via session storage
-    if (sessionStorage.getItem('auth_in_progress') === 'true') {
-      console.log('Auth already in progress, preventing duplicate popup');
-      return;
+    // Provider configuration
+    firebaseGoogleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    
+    const result = await signInWithPopup(firebaseAuth, firebaseGoogleProvider);
+    
+    // Save the email for future logins
+    if (result.user?.email) {
+      localStorage.setItem('lastLoginEmail', result.user.email);
     }
-    
-    if (!firebaseAuth || !firebaseGoogleProvider) {
-      console.error("Firebase auth is not initialized - cannot sign in");
-      return;
-    }
-    
-    try {
-      setIsSigningIn(true);
-      sessionStorage.setItem('auth_in_progress', 'true');
+  } catch (error: any) {
+    // Only log non-user-cancelled errors
+    if (error.code !== 'auth/popup-closed-by-user' && 
+        error.code !== 'auth/cancelled-popup-request') {
+      console.error("Error signing in with Google:", error);
       
-      // Simplified provider configuration
-      firebaseGoogleProvider.setCustomParameters({
-        prompt: 'select_account'
-      });
-      
-      const result = await signInWithPopup(firebaseAuth, firebaseGoogleProvider);
-      
-      // Save the email for future logins
-      if (result.user?.email) {
-        localStorage.setItem('lastLoginEmail', result.user.email);
+      if (error.code === 'auth/unauthorized-domain') {
+        const currentDomain = window.location.origin;
+        console.error(`The domain '${currentDomain}' isn't authorized in Firebase.`);
+        alert(`Authentication Error: This domain (${currentDomain}) is not authorized.`);
       }
-    } catch (error: any) {
-      // Only log non-user-cancelled errors
-      if (error.code !== 'auth/popup-closed-by-user' && 
-          error.code !== 'auth/cancelled-popup-request') {
-        console.error("Error signing in with Google:", error);
-        
-        if (error.code === 'auth/unauthorized-domain') {
-          const currentDomain = window.location.origin;
-          console.error(`The domain '${currentDomain}' isn't authorized in Firebase.`);
-          alert(`Authentication Error: This domain (${currentDomain}) is not authorized.`);
-        }
-      }
-    } finally {
-      setIsSigningIn(false);
-      sessionStorage.removeItem('auth_in_progress');
     }
-  };
+  } finally {
+    setIsSigningIn(false);
+    sessionStorage.removeItem('auth_in_progress');
+  }
+};
 
   const signOut = async (): Promise<void> => {
     if (!firebaseAuth) {
