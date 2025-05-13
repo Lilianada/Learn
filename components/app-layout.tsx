@@ -96,9 +96,9 @@ export function AppLayout() {
           <div className={cn(
             "flex-1 w-full overflow-y-auto",
             "pt-0 pb-4 px-4",
-            isDesktop ? "ml-64" : "" /* Add left margin equal to sidebar width on desktop */
+            
           )}
-          style={{ height: "calc(100vh - 3.5rem)" }} /* 3.5rem = 14px (header height) */
+          style={{ height: "calc(100vh - 4.5rem)" }} /* 3.5rem = 14px (header height) */
           >
             <MainContent sidebarOpen={sidebarOpen && !isDesktop} />
           </div>

@@ -17,6 +17,7 @@ import Color from "@tiptap/extension-color"
 import FontSize from "@tiptap/extension-font-size"
 import { useCallback, useEffect, useState, useRef } from "react"
 import { FloatingToolbar } from "./floating-toolbar"
+import debounce from "lodash/debounce"
 
 const lowlight = createLowlight(common)
 
@@ -74,6 +75,16 @@ export function Editor({ initialContent, onChange }: EditorProps) {
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
+    },
+    // Add selection change handler to detect when user highlights text
+    onSelectionUpdate: ({ editor }) => {
+      // Check if there is any text selected
+      const hasSelection = !editor.state.selection.empty;
+      setSelectionActive(hasSelection);
+      
+      if (hasSelection) {
+        debouncedUpdateToolbarPosition();
+      }
     },
   })
 
@@ -185,32 +196,59 @@ export function Editor({ initialContent, onChange }: EditorProps) {
     })
   }, [editor])
 
+  // Create a debounced version of the updateToolbarPosition function
+  const debouncedUpdateToolbarPosition = useCallback(
+    debounce(() => {
+      if (editor) {
+        updateToolbarPosition();
+      }
+    }, 100),
+    [editor]
+  );
+
+  // Add event listeners for selection changes
   useEffect(() => {
-  // Only update content from props when it's significantly different
-  // This prevents disruptions while typing
-  if (editor && initialContent && editor.isEmpty) {
-    editor.commands.setContent(initialContent)
-  } else if (
-    editor && 
-    initialContent && 
-    // Only update if there's a substantial difference
-    Math.abs(initialContent.length - editor.getHTML().length) > 10
-  ) {
-    // Store cursor position
-    const { from, to } = editor.state.selection
+    if (!editor) return;
     
-    // Update content
-    editor.commands.setContent(initialContent)
+    // Check for selection when mouse up happens anywhere in the document
+    const handleMouseUp = () => {
+      if (!editor.view.state.selection.empty) {
+        setSelectionActive(true);
+        debouncedUpdateToolbarPosition();
+      } else {
+        setSelectionActive(false);
+      }
+    };
     
-    // Restore cursor position if possible
-    try {
-      editor.commands.setTextSelection({ from, to })
-    } catch (e) {
-      // Cursor position might be invalid after content change
-      console.debug('Could not restore cursor position after content update')
-    }
-  }
-}, [editor, initialContent])
+    // Also listen for keyup events that might change selection
+    const handleKeyUp = (event: KeyboardEvent) => {
+      // Only check selection for navigation keys or key combinations that might affect selection
+      if (
+        event.key.startsWith('Arrow') ||
+        event.key === 'Home' ||
+        event.key === 'End' ||
+        event.key === 'PageUp' ||
+        event.key === 'PageDown' ||
+        (event.shiftKey && !event.metaKey && !event.ctrlKey) ||
+        event.key === 'Shift'
+      ) {
+        if (!editor.view.state.selection.empty) {
+          setSelectionActive(true);
+          debouncedUpdateToolbarPosition();
+        } else {
+          setSelectionActive(false);
+        }
+      }
+    };
+    
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [editor, debouncedUpdateToolbarPosition]);
 
   if (!editor) {
     return null
@@ -230,7 +268,25 @@ export function Editor({ initialContent, onChange }: EditorProps) {
       <div>
         <EditorContent 
           editor={editor} 
-          className="min-h-[calc(100vh_-_10rem)] py-4 focus:outline-none prose prose-sm sm:prose max-w-none dark:prose-invert border-none editor-borderless" 
+          className="min-h-[calc(100vh_-_10rem)] py-4 focus:outline-none prose prose-sm sm:prose max-w-none dark:prose-invert border-none editor-borderless"
+          onClick={() => {
+            // When clicking in the editor, check if there's a selection
+            if (!editor.view.state.selection.empty) {
+              setSelectionActive(true);
+              debouncedUpdateToolbarPosition();
+            }
+          }}
+          onFocus={() => {
+            // When focusing, check if there's already a selection
+            if (!editor.view.state.selection.empty) {
+              setSelectionActive(true);
+              debouncedUpdateToolbarPosition();
+            }
+          }}
+          onBlur={() => {
+            // Hide toolbar when editor loses focus
+            setSelectionActive(false);
+          }}
         />
       </div>
     </div>

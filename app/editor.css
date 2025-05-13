@@ -1,0 +1,20 @@
+/* Custom editor styles */
+.ProseMirror p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  line-height: calc(1.5em - 2px); /* Standard line height is 1.5em, this reduces it by 2px */
+}
+
+/* Style specifically for paragraphs that are direct children of the editor */
+.ProseMirror > p {
+  margin-top: 0.7em;
+  margin-bottom: 0.7em;
+}
+
+/* When paragraphs follow other elements, adjust spacing accordingly */
+.ProseMirror h1 + p,
+.ProseMirror h2 + p,
+.ProseMirror h3 + p {
+  margin-top: 0.5em;
+}
+

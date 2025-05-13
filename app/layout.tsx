@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import "./theme.css"
+import "./editor.css" // Custom editor styles for paragraph spacing
 import { ThemeProvider } from "../components/theme-provider"
 import { TooltipProvider } from "../components/ui/tooltip"
 import { AuthProvider } from "../lib/auth-context"
