@@ -460,7 +460,28 @@ export function FloatingToolbar({
                 if (onImageAdd) {
                   onImageAdd();
                 } else {
-                  console.log("Image button clicked, but no handler provided");
+                  // Create a file input element if no handler is provided
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = "image/*";
+                  input.onchange = (event) => {
+                    const file = (event.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (e) => {
+                        const result = e.target?.result;
+                        if (typeof result === "string") {
+                          editor
+                            .chain()
+                            .focus()
+                            .setImage({ src: result })
+                            .run();
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  };
+                  input.click();
                 }
               }}
             >

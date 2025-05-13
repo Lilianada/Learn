@@ -29,23 +29,26 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
   const store = user && firebaseEnabled ? useFirebaseStore() : useStore();
 
   // Helper function to format dates consistently across the component
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Unknown";
+  // Helper function to format dates consistently across the component
+const formatDate = (dateString?: string, showTime: boolean = false) => {
+  if (!dateString) return "Unknown";
 
-    // Try to parse the date string (handles both ISO strings and Firebase timestamps)
-    try {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
+  // Try to parse the date string (handles both ISO strings and Firebase timestamps)
+  try {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      ...(showTime ? {
         hour: "2-digit",
-        minute: "2-digit",
-      }).format(date);
-    } catch (e) {
-      return "Invalid date";
-    }
-  };
+        minute: "2-digit"
+      } : {})
+    }).format(date);
+  } catch (e) {
+    return "Invalid date";
+  }
+};
 
   const {
     currentSubjectId,
