@@ -45,7 +45,6 @@ export function AppLayout() {
           </Button>
         )}
       </Header>
-      <div className="flex flex-1 overflow-hidden">
         <div
           className={cn(
             "grid transition-all duration-300 ease-in-out",
@@ -57,11 +56,10 @@ export function AppLayout() {
           )}>
             <Sidebar open={sidebarOpen || isDesktop} onClose={() => setSidebarOpen(false)} />
           </div>
-          <div className="col-span-3">
+          <div className="col-span-3 w-full">
             <MainContent sidebarOpen={sidebarOpen && !isDesktop} />
           </div>
         </div>
-      </div>
     </div>
   )
 }

@@ -215,7 +215,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
   }
 
   return (
-    <div className="relative min-h-screen" ref={editorContainerRef}>
+    <div className="relative min-h-[calc(100vh_-_10rem)]" ref={editorContainerRef}>
       {/* Floating formatting toolbar */}
       <FloatingToolbar 
         editor={editor}
@@ -228,7 +228,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
       <div>
         <EditorContent 
           editor={editor} 
-          className="min-h-screen py-4 focus:outline-none prose prose-sm sm:prose max-w-none dark:prose-invert border-none editor-borderless" 
+          className="min-h-[calc(100vh_-_10rem)] py-4 focus:outline-none prose prose-sm sm:prose max-w-none dark:prose-invert border-none editor-borderless" 
         />
       </div>
     </div>
