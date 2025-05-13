@@ -55,27 +55,38 @@ export function AppLayout() {
         )}
       </Header>
 
-      {/* Only render content when not in loading state */}
       {!loading && (
-        <div
-          className={cn(
-            "grid transition-all duration-300 ease-in-out",
-            isDesktop ? "grid-cols-4" : sidebarOpen ? "w-full" : "w-0"
-          )}
-        >
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          {/* Mobile sidebar - only visible when sidebarOpen is true */}
           <div
             className={cn(
-              isDesktop ? "col-span-1" : sidebarOpen ? "w-full" : "w-0"
+              "fixed inset-y-0 left-0 z-20 md:relative md:z-0",
+              "transition-transform duration-300 ease-in-out transform",
+              "bg-white dark:bg-sidebar warm:bg-warm-sidebar shadow-lg md:shadow-none",
+              "w-64 md:w-auto md:flex-shrink-0",
+              isDesktop
+                ? "translate-x-0"
+                : sidebarOpen
+                ? "translate-x-0"
+                : "-translate-x-full"
             )}
           >
             <ErrorBoundary>
-              <Sidebar
-                open={sidebarOpen || isDesktop}
-                onClose={() => setSidebarOpen(false)}
-              />
+              <Sidebar open={true} onClose={() => setSidebarOpen(false)} />
             </ErrorBoundary>
           </div>
-          <div className="col-span-3 w-full">
+
+          {/* Overlay to close sidebar on mobile */}
+          {sidebarOpen && !isDesktop && (
+            <div
+              className="fixed inset-0 bg-black/20 z-10"
+              onClick={() => setSidebarOpen(false)}
+              aria-hidden="true"
+            />
+          )}
+
+          {/* Main content area */}
+          <div className="flex-1 w-full overflow-auto">
             <MainContent sidebarOpen={sidebarOpen && !isDesktop} />
           </div>
         </div>

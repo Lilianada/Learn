@@ -14,7 +14,7 @@ export default function NotFound() {
         const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)]
         element.innerText = randomEmoji
       }
-    }, 1500)
+    }, 1000)
     
     return () => clearInterval(interval)
   }, [])

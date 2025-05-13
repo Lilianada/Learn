@@ -7,7 +7,7 @@ import { Button } from "./ui/button"
 import { useStore } from "../store/use-store"
 import { useFirebaseStore } from "../store/use-firebase-store"
 import { useAuth } from "../lib/auth-context"
-import { Download, LogIn, LogOut, Plus } from "lucide-react"
+import { Download, Plus } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { exportToPDF, exportToMarkdown } from "../lib/export"
 import { useState } from "react"
@@ -76,7 +76,6 @@ export function Header({ children }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* If user is signed in, show a green dot, if user needs to signin, show a red dot */}
           {firebaseEnabled && (
             <Tooltip>
               <TooltipTrigger asChild>

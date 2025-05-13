@@ -101,7 +101,7 @@ export function SettingsMenu() {
                     }}
                     className={fontFamily === "sans" ? "bg-accent" : ""}
                   >
-                    Sans-serif (Geist-sans)
+                    Sans-serif
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
@@ -110,7 +110,7 @@ export function SettingsMenu() {
                     }}
                     className={fontFamily === "mono" ? "bg-accent" : ""}
                   >
-                    Monospace (Geist-mono)
+                    Monospace
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>

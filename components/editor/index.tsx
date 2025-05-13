@@ -77,11 +77,32 @@ export function Editor({ initialContent, onChange }: EditorProps) {
     },
   })
 
-  useEffect(() => {
-    if (editor && initialContent !== editor.getHTML()) {
-      editor.commands.setContent(initialContent)
+ useEffect(() => {
+  // Only update content from props when it's significantly different
+  // This prevents disruptions while typing
+  if (editor && initialContent && editor.isEmpty) {
+    editor.commands.setContent(initialContent)
+  } else if (
+    editor && 
+    initialContent && 
+    // Only update if there's a substantial difference
+    Math.abs(initialContent.length - editor.getHTML().length) > 10
+  ) {
+    // Store cursor position
+    const { from, to } = editor.state.selection
+    
+    // Update content
+    editor.commands.setContent(initialContent)
+    
+    // Restore cursor position if possible
+    try {
+      editor.commands.setTextSelection({ from, to })
+    } catch (e) {
+      // Cursor position might be invalid after content change
+      console.debug('Could not restore cursor position after content update')
     }
-  }, [editor, initialContent])
+  }
+}, [editor, initialContent])
   
   // Function to update toolbar position based on selection
   const updateToolbarPosition = useCallback(() => {
