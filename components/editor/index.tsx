@@ -121,8 +121,8 @@ export function Editor({ initialContent, onChange }: EditorProps) {
     if (!editorElement) return
     const editorRect = editorElement.getBoundingClientRect()
     
-    // Get the parent container (max-w-3xl)
-    const contentContainer = document.querySelector('.max-w-3xl')
+    // Get the parent container (max-w-5xl)
+    const contentContainer = document.querySelector('.max-w-5xl')
     if (!contentContainer) return
     const containerRect = contentContainer.getBoundingClientRect()
     
@@ -186,50 +186,31 @@ export function Editor({ initialContent, onChange }: EditorProps) {
   }, [editor])
 
   useEffect(() => {
-    if (editor) {
-      // Handle selection changes to detect active selection and position floating menu
-      editor.on('selectionUpdate', () => {
-        if (editor.view.state.selection.empty) {
-          setSelectionActive(false)
-          return
-        }
-        
-        setSelectionActive(true)
-        updateToolbarPosition()
-      })
-      
-      // Also update on scroll to keep toolbar positioned correctly relative to selection
-      const handleScroll = () => {
-        if (selectionActive) {
-          updateToolbarPosition()
-        }
-      }
-      
-      // Detect click outside to hide floating menu
-      const handleClickOutside = (event: MouseEvent) => {
-        if (editor.view && !editor.view.state.selection.empty) return
-        setSelectionActive(false)
-      }
-      
-      // Update position on window resize to handle responsive layout changes
-      const handleResize = () => {
-        if (selectionActive) {
-          updateToolbarPosition()
-        }
-      }
-      
-      document.addEventListener('mousedown', handleClickOutside)
-      window.addEventListener('scroll', handleScroll, { passive: true })
-      window.addEventListener('resize', handleResize)
-      
-      return () => {
-        editor.off("selectionUpdate")
-        document.removeEventListener('mousedown', handleClickOutside)
-        window.removeEventListener('scroll', handleScroll)
-        window.removeEventListener('resize', handleResize)
-      }
+  // Only update content from props when it's significantly different
+  // This prevents disruptions while typing
+  if (editor && initialContent && editor.isEmpty) {
+    editor.commands.setContent(initialContent)
+  } else if (
+    editor && 
+    initialContent && 
+    // Only update if there's a substantial difference
+    Math.abs(initialContent.length - editor.getHTML().length) > 10
+  ) {
+    // Store cursor position
+    const { from, to } = editor.state.selection
+    
+    // Update content
+    editor.commands.setContent(initialContent)
+    
+    // Restore cursor position if possible
+    try {
+      editor.commands.setTextSelection({ from, to })
+    } catch (e) {
+      // Cursor position might be invalid after content change
+      console.debug('Could not restore cursor position after content update')
     }
-  }, [editor, selectionActive, updateToolbarPosition])
+  }
+}, [editor, initialContent])
 
   if (!editor) {
     return null

@@ -5,7 +5,6 @@ import { MainContent } from "./main-content";
 import { Header } from "./header";
 import { SignInDialog } from "./sign-in-dialog";
 import { LoadingOverlay } from "./loading-overlay";
-import { DebugButton } from "./debug-button";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
@@ -37,39 +36,47 @@ export function AppLayout() {
 
       <SignInDialog />
 
-      <Header>
-        {!isDesktop && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-            className="mr-2"
-          >
-            {sidebarOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </Button>
-        )}
-      </Header>
+      {/* Fixed header */}
+      <div className="fixed top-0 left-0 right-0 z-30">
+        <Header>
+          {!isDesktop && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+              className="mr-2"
+            >
+              {sidebarOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          )}
+        </Header>
+      </div>
+
+      {/* Header spacer to prevent content from being hidden under fixed header */}
+      <div className="h-14"></div>
 
       {!loading && (
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-row flex-1 overflow-hidden">
           {/* Mobile sidebar - only visible when sidebarOpen is true */}
           <div
             className={cn(
-              "fixed inset-y-0 left-0 z-20 md:relative md:z-0",
+              "fixed top-14 bottom-0 left-0 z-20 overflow-y-auto",
+              "md:relative md:top-0 md:w-80 md:z-0",
               "transition-transform duration-300 ease-in-out transform",
               "bg-white dark:bg-sidebar warm:bg-warm-sidebar shadow-lg md:shadow-none",
-              "w-64 md:w-auto md:flex-shrink-0",
+              "w-64 md:flex-shrink-0", 
               isDesktop
                 ? "translate-x-0"
                 : sidebarOpen
                 ? "translate-x-0"
                 : "-translate-x-full"
             )}
+            style={{ height: "calc(100vh - 3.5rem)" }} /* 3.5rem = 14px (header height) */
           >
             <ErrorBoundary>
               <Sidebar open={true} onClose={() => setSidebarOpen(false)} />
@@ -85,8 +92,14 @@ export function AppLayout() {
             />
           )}
 
-          {/* Main content area */}
-          <div className="flex-1 w-full overflow-auto">
+          {/* Main content area - only this should scroll */}
+          <div className={cn(
+            "flex-1 w-full overflow-y-auto",
+            "pt-0 pb-4 px-4",
+            isDesktop ? "ml-64" : "" /* Add left margin equal to sidebar width on desktop */
+          )}
+          style={{ height: "calc(100vh - 3.5rem)" }} /* 3.5rem = 14px (header height) */
+          >
             <MainContent sidebarOpen={sidebarOpen && !isDesktop} />
           </div>
         </div>

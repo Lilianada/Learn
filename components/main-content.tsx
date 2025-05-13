@@ -29,7 +29,6 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
   const store = user && firebaseEnabled ? useFirebaseStore() : useStore();
 
   // Helper function to format dates consistently across the component
-  // Helper function to format dates consistently across the component
 const formatDate = (dateString?: string, showTime: boolean = false) => {
   if (!dateString) return "Unknown";
 
@@ -103,27 +102,16 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
     const subject = topics[subtopic.topicId]
       ? subjects[topics[subtopic.topicId].subjectId]
       : null;
-    const topicSubtopics = Object.values(subtopics).filter(
-      (s) => s.topicId === subtopic.topicId
-    );
 
     contentTitle = subtopic.title;
     currentContent = subtopic.content;
 
-    // Get formatted dates for display
-    const updatedAt = formatDate(subtopic.updatedAt);
 
     content = (
       <>
         <div className="w-full mb-4 flex justify-between gap-4 flex-wrap sm:flex-row">
-          {/* <div className="flex items-center">
-            <h2 className="text-lg font-semibold flex-1">{subtopic.title}</h2>
-          </div> */}
           <div className="text-muted-foreground text-sm">
             {subject?.title} / {topic?.title} / {subtopic.title}
-          </div>
-          <div className=" text-xs text-muted-foreground mt-1 space-x-4">
-              <span className="font-medium">Last edited:</span> {updatedAt}
           </div>
         </div>
         <Editor
@@ -146,21 +134,13 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
     currentContent = topic.content || "";
 
     if (topicSubtopics.length === 0) {
-      // No subtopics, allow editing the topic directly
-      const updatedAt = formatDate(topic.updatedAt);
-
       content = (
         <>
           <div className="mb-4 flex flex-col">
             <div className="flex items-center">
-              {/* <h2 className="text-xl font-semibold flex-1">{topic.title}</h2> */}
+              <h2 className="text-xl font-semibold flex-1">{topic.title}</h2>
               <div className="text-muted-foreground text-sm">
                 {subject?.title} / {topic.title}
-              </div>
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
-              <div>
-                <span className="font-medium">Last edited:</span> {updatedAt}
               </div>
             </div>
           </div>
@@ -171,21 +151,14 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
         </>
       );
     } else {
-      // Show topic overview with links to subtopics
-      const updatedAt = formatDate(topic.updatedAt);
 
       content = (
         <>
           <div className="mb-6 flex flex-col">
             <div className="flex items-center">
-              <h2 className="text-xl font-semibold flex-1">{topic.title}</h2>
+              {/* <h2 className="text-xl font-semibold flex-1">{topic.title}</h2> */}
               <div className="text-muted-foreground text-sm">
                 {subject?.title} / {topic.title}
-              </div>
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
-              <div>
-                <span className="font-medium">Last edited:</span> {updatedAt}
               </div>
             </div>
           </div>
@@ -247,20 +220,13 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
 
     contentTitle = subject.title;
 
-    // Format subject dates
-    const updatedAt = formatDate(subject.updatedAt);
 
     content = (
       <>
         <div className="mb-6 flex flex-col">
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             <h2 className="text-lg font-medium">{subject.title}</h2>
-          </div>
-          <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-4">
-            <div>
-              <span className="font-medium">Last edited:</span> {updatedAt}
-            </div>
-          </div>
+          </div> */}
         </div>
         <div className="grid gap-3">
           {subjectTopics.length > 0 ? (
@@ -328,11 +294,11 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
     <>
       <main
         className={cn(
-          "flex-1 overflow-y-auto p-6 h-full",
+          "flex-1 h-full",
           sidebarOpen && "opacity-50 md:opacity-100"
         )}
       >
-        <div className="mx-auto max-w-3xl h-full">{content}</div>
+        <div className="mx-auto max-w-5xl h-full py-6 px-2 sm:px-6">{content}</div>
       </main>
 
       {/* Dialog forms */}

@@ -28,7 +28,7 @@ export function SignInDialog() {
   
   return (
     <Dialog open={shouldShowDialog} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md m-4">
         <DialogHeader>
           <DialogTitle>Sign in to LearnDev</DialogTitle>
           <DialogDescription>

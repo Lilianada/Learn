@@ -81,7 +81,7 @@ export function FloatingToolbar({
     if (isActive && toolbarRef.current) {
       // Check if the toolbar is outside the visible area
       const toolbarRect = toolbarRef.current.getBoundingClientRect();
-      const contentContainer = document.querySelector(".max-w-3xl");
+      const contentContainer = document.querySelector(".max-w-4xl");
 
       if (contentContainer) {
         const containerRect = contentContainer.getBoundingClientRect();

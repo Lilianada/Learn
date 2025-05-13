@@ -69,7 +69,7 @@ export function Header({ children }: HeaderProps) {
   }
 
   return (
-      <header className="flex h-14 items-center justify-between border-b border-gray-100 dark:border-border px-4 bg-white dark:bg-background">
+      <header className="flex h-14 items-center justify-between border-b border-gray-100 dark:border-border px-4 bg-white dark:bg-background shadow-sm w-full">
         <div className="flex items-center gap-2">
           {children}
           <h1 className="text-base font-medium text-gray-900 dark:text-gray-50">LearnIt</h1>
