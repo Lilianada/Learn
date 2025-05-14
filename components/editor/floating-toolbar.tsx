@@ -41,6 +41,7 @@ interface FloatingToolbarProps {
   isActive: boolean;
   position: { top: number; left: number; transform: string };
   onImageAdd?: () => void;
+  onInteraction?: (interacting: boolean) => void;
 }
 
 // Colors based on the image
@@ -66,9 +67,20 @@ export function FloatingToolbar({
   isActive,
   position,
   onImageAdd,
+  onInteraction,
 }: FloatingToolbarProps) {
   const [showColors, setShowColors] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  
+  // Track whether the toolbar is being interacted with
+  const [isInteracting, setIsInteracting] = useState(false);
+  
+  // Notify parent component about interaction state
+  useEffect(() => {
+    if (onInteraction) {
+      onInteraction(isInteracting);
+    }
+  }, [isInteracting, onInteraction]);
 
   // Get current text color for display in the UI
   const currentTextColor = useMemo(() => {
@@ -113,12 +125,37 @@ export function FloatingToolbar({
   return (
     <div
       ref={toolbarRef}
-      className="absolute z-50 bg-background border rounded shadow-md transition-opacity duration-200 overflow-hidden"
+      className="floating-toolbar absolute z-50 bg-background border rounded shadow-md transition-opacity duration-200 overflow-hidden"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
         transform: position.transform,
         maxWidth: "calc(100% - 16px)",
+      }}
+      onMouseEnter={() => {
+        setIsInteracting(true);
+      }}
+      onMouseLeave={() => {
+        // Small delay to prevent instant hiding
+        setTimeout(() => setIsInteracting(false), 100);
+      }}
+      onMouseDown={(e) => {
+        // Prevent toolbar interactions from causing the editor to lose focus
+        e.preventDefault();
+        setIsInteracting(true);
+        
+        // Re-focus the editor immediately so commands will work
+        if (editor) {
+          editor.view.focus();
+        }
+      }}
+      onClick={(e) => {
+        // Prevent clicks from bubbling to the document
+        e.stopPropagation();
+        // Ensure editor keeps focus
+        if (editor) {
+          editor.view.focus();
+        }
       }}
     >
       <div className="flex items-center overflow-x-auto scrollbar-hide py-1 px-1 max-w-full">
@@ -139,9 +176,12 @@ export function FloatingToolbar({
               className={
                 editor.isActive("heading", { level: 1 }) ? "bg-accent" : ""
               }
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 1 }).run()
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().toggleHeading({ level: 1 }).run();
+                setIsInteracting(true);
+              }}
             >
               <Heading1 className="h-4 w-4 mr-2" />
               <span>Heading 1</span>
@@ -150,9 +190,12 @@ export function FloatingToolbar({
               className={
                 editor.isActive("heading", { level: 2 }) ? "bg-accent" : ""
               }
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 2 }).run()
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().toggleHeading({ level: 2 }).run();
+                setIsInteracting(true);
+              }}
             >
               <Heading2 className="h-4 w-4 mr-2" />
               <span>Heading 2</span>
@@ -161,16 +204,24 @@ export function FloatingToolbar({
               className={
                 editor.isActive("heading", { level: 3 }) ? "bg-accent" : ""
               }
-              onClick={() =>
-                editor.chain().focus().toggleHeading({ level: 3 }).run()
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().toggleHeading({ level: 3 }).run();
+                setIsInteracting(true);
+              }}
             >
               <Heading3 className="h-4 w-4 mr-2" />
               <span>Heading 3</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className={editor.isActive("paragraph") ? "bg-accent" : ""}
-              onClick={() => editor.chain().focus().setParagraph().run()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().setParagraph().run();
+                setIsInteracting(true);
+              }}
             >
               <span>Normal text</span>
             </DropdownMenuItem>
@@ -198,14 +249,26 @@ export function FloatingToolbar({
             {[12, 14, 16, 18, 20, 24, 30].map((size) => (
               <DropdownMenuItem
                 key={size}
-                onClick={() =>
-                  editor.chain().focus().setFontSize(`${size}px`).run()
-                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Set font size and ensure the editor keeps focus
+                  editor.chain().focus().setFontSize(`${size}px`).run();
+                  // Ensure toolbar stays visible after selection
+                  setTimeout(() => {
+                    if (editor && !editor.view.state.selection.empty) {
+                      setIsInteracting(true);
+                    }
+                  }, 10);
+                }}
                 className={
                   editor.getAttributes("textStyle").fontSize === `${size}px`
                     ? "bg-accent"
                     : ""
                 }
+                onMouseDown={(e) => {
+                  // Prevent blur
+                  e.preventDefault();
+                }}
               >
                 {size}
               </DropdownMenuItem>
@@ -325,7 +388,12 @@ export function FloatingToolbar({
               className={
                 editor.isActive({ textAlign: "left" }) ? "bg-accent" : ""
               }
-              onClick={() => editor.chain().focus().setTextAlign("left").run()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().setTextAlign("left").run();
+                setIsInteracting(true);
+              }}
             >
               <AlignLeft className="h-4 w-4 mr-2" />
               <span>Align left</span>
@@ -334,9 +402,12 @@ export function FloatingToolbar({
               className={
                 editor.isActive({ textAlign: "center" }) ? "bg-accent" : ""
               }
-              onClick={() =>
-                editor.chain().focus().setTextAlign("center").run()
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().setTextAlign("center").run();
+                setIsInteracting(true);
+              }}
             >
               <AlignCenter className="h-4 w-4 mr-2" />
               <span>Align center</span>
@@ -345,7 +416,12 @@ export function FloatingToolbar({
               className={
                 editor.isActive({ textAlign: "right" }) ? "bg-accent" : ""
               }
-              onClick={() => editor.chain().focus().setTextAlign("right").run()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().setTextAlign("right").run();
+                setIsInteracting(true);
+              }}
             >
               <AlignRight className="h-4 w-4 mr-2" />
               <span>Align right</span>
@@ -369,14 +445,24 @@ export function FloatingToolbar({
           <DropdownMenuContent>
             <DropdownMenuItem
               className={editor.isActive("bulletList") ? "bg-accent" : ""}
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().toggleBulletList().run();
+                setIsInteracting(true);
+              }}
             >
               <List className="h-4 w-4 mr-2" />
               <span>Bullet list</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className={editor.isActive("orderedList") ? "bg-accent" : ""}
-              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().toggleOrderedList().run();
+                setIsInteracting(true);
+              }}
             >
               <ListOrdered className="h-4 w-4 mr-2" />
               <span>Numbered list</span>
@@ -409,9 +495,29 @@ export function FloatingToolbar({
                   key={color.value}
                   className="w-8 h-8 rounded-full cursor-pointer hover:scale-110 transition-transform"
                   style={{ backgroundColor: color.value }}
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    // Prevent default to avoid losing selection
+                    e.preventDefault();
+                  }}
+                  onClick={(e) => {
+                    // Prevent default behavior
+                    e.preventDefault();
+                    
+                    // Apply color change
                     editor.chain().focus().setColor(color.value).run();
-                    setShowColors(false);
+                    
+                    // Close color picker after a small delay to ensure command is executed
+                    setTimeout(() => {
+                      setShowColors(false);
+                      
+                      // Ensure editor keeps focus and selection
+                      if (editor) {
+                        editor.view.focus();
+                      }
+                      
+                      // Keep toolbar active
+                      setIsInteracting(true);
+                    }, 10);
                   }}
                   title={color.name}
                 />
@@ -435,22 +541,35 @@ export function FloatingToolbar({
           <DropdownMenuContent>
             <DropdownMenuItem
               className={editor.isActive("blockquote") ? "bg-accent" : ""}
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().toggleBlockquote().run();
+                setIsInteracting(true);
+              }}
             >
               <Quote className="h-4 w-4 mr-2" />
               <span>Quote</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className={editor.isActive("codeBlock") ? "bg-accent" : ""}
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().toggleCodeBlock().run();
+                setIsInteracting(true);
+              }}
             >
               <Code className="h-4 w-4 mr-2" />
               <span>Code block</span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() =>
-                editor.chain().focus().insertTable({ rows: 3, cols: 3 }).run()
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                editor.chain().focus().insertTable({ rows: 3, cols: 3 }).run();
+                setIsInteracting(true);
+              }}
             >
               <TableIcon className="h-4 w-4 mr-2" />
               <span>Table</span>

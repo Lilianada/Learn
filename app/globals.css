@@ -227,6 +227,10 @@
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.sidebar{
+  background-color: hsl(var(--muted)/0.3);
+}
+
 .content-transition {
   transition-property: margin, padding, width;
   transition-duration: 300ms;

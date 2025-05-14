@@ -18,3 +18,8 @@
   margin-top: 0.5em;
 }
 
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3 {
+  color: hsl(var(--text));
+}

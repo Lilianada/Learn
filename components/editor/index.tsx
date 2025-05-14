@@ -16,8 +16,7 @@ import TextStyle from "@tiptap/extension-text-style"
 import Color from "@tiptap/extension-color"
 import FontSize from "@tiptap/extension-font-size"
 import { useCallback, useEffect, useState, useRef } from "react"
-import { FloatingToolbar } from "./floating-toolbar"
-import debounce from "lodash/debounce"
+import { FloatingButtonToolbar } from "./floating-button-toolbar"
 
 const lowlight = createLowlight(common)
 
@@ -28,12 +27,6 @@ interface EditorProps {
 
 export function Editor({ initialContent, onChange }: EditorProps) {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
-  const [selectionActive, setSelectionActive] = useState(false)
-  const [floatingMenuPosition, setFloatingMenuPosition] = useState({ 
-    top: 0, 
-    left: 0, 
-    transform: 'translateY(-100%)' 
-  })
   const editorContainerRef = useRef<HTMLDivElement>(null)
 
   const editor = useEditor({
@@ -57,7 +50,7 @@ export function Editor({ initialContent, onChange }: EditorProps) {
       TableHeader,
       TableCell,
       Image,
-      // New extensions for text formatting
+      // Text formatting extensions
       Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -75,218 +68,53 @@ export function Editor({ initialContent, onChange }: EditorProps) {
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
-    },
-    // Add selection change handler to detect when user highlights text
-    onSelectionUpdate: ({ editor }) => {
-      // Check if there is any text selected
-      const hasSelection = !editor.state.selection.empty;
-      setSelectionActive(hasSelection);
-      
-      if (hasSelection) {
-        debouncedUpdateToolbarPosition();
-      }
-    },
+    }
   })
 
- useEffect(() => {
-  // Only update content from props when it's significantly different
-  // This prevents disruptions while typing
-  if (editor && initialContent && editor.isEmpty) {
-    editor.commands.setContent(initialContent)
-  } else if (
-    editor && 
-    initialContent && 
-    // Only update if there's a substantial difference
-    Math.abs(initialContent.length - editor.getHTML().length) > 10
-  ) {
-    // Store cursor position
-    const { from, to } = editor.state.selection
-    
-    // Update content
-    editor.commands.setContent(initialContent)
-    
-    // Restore cursor position if possible
-    try {
-      editor.commands.setTextSelection({ from, to })
-    } catch (e) {
-      // Cursor position might be invalid after content change
-      console.debug('Could not restore cursor position after content update')
-    }
-  }
-}, [editor, initialContent])
-  
-  // Function to update toolbar position based on selection
-  const updateToolbarPosition = useCallback(() => {
-    if (!editor || editor.view.state.selection.empty) return
-    
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return
-    
-    const range = selection.getRangeAt(0)
-    const rect = range.getBoundingClientRect()
-    
-    if (rect.width === 0) return
-    
-    // Get the editor DOM element for relative positioning
-    const editorElement = document.querySelector('.ProseMirror')
-    if (!editorElement) return
-    const editorRect = editorElement.getBoundingClientRect()
-    
-    // Get the parent container (max-w-5xl)
-    const contentContainer = document.querySelector('.max-w-5xl')
-    if (!contentContainer) return
-    const containerRect = contentContainer.getBoundingClientRect()
-    
-    // Calculate position relative to the editor element and ensure the toolbar is visible
-    const menuWidth = Math.min(containerRect.width * 0.95, 600) // Responsive width based on container
-    
-    // Calculate horizontal position centered on selection
-    let leftPos = rect.left + (rect.width / 2) - (menuWidth / 2)
-    
-    // Constrain to container boundaries, not window boundaries
-    const containerLeft = containerRect.left
-    const containerRight = containerRect.right
-    
-    // Keep toolbar within container bounds (with small margins)
-    const margin = 8 // Small margin from container edge
-    leftPos = Math.max(
-      containerLeft + margin,
-      Math.min(leftPos, containerRight - menuWidth - margin)
-    )
-    
-    // Check if the toolbar would be positioned above the viewport
-    const spaceAbove = rect.top - window.scrollY
-    const transformDirection = spaceAbove < 50 ? 'translateY(10px)' : 'translateY(-100%)'
-    
-    // Vertical positioning with container boundaries in mind
-    const topPosition = rect.top - editorRect.top
-    
-    // Adjust position based on whether toolbar displays above or below text
-    let adjustedTop = topPosition
-    if (transformDirection === 'translateY(-100%)') {
-      // When showing above text, ensure there's room
-      if (topPosition < 50) {
-        // Not enough room above, show below
-        adjustedTop = topPosition + rect.height + 10
-      } else {
-        // Show above with offset
-        adjustedTop = topPosition - 10
-      }
-    } else {
-      // When showing below text, add offset from selection
-      adjustedTop = topPosition + rect.height + 10
-    }
-    
-    // Calculate the absolute position of the toolbar relative to the container
-    const absoluteTop = adjustedTop + editorRect.top - containerRect.top
-    
-    // Check if toolbar would overflow the container vertically
-    if (absoluteTop < margin) {
-      // Too close to top of container, move it down
-      adjustedTop = margin + (editorRect.top - containerRect.top)
-    } else if (absoluteTop + 50 > containerRect.height - margin) {
-      // Too close to bottom of container, move it up
-      adjustedTop = containerRect.height - margin - 50 - (editorRect.top - containerRect.top)
-    }
-    
-    setFloatingMenuPosition({
-      top: adjustedTop,
-      left: leftPos - editorRect.left, // Adjust for editor position
-      transform: transformDirection
-    })
-  }, [editor])
-
-  // Create a debounced version of the updateToolbarPosition function
-  const debouncedUpdateToolbarPosition = useCallback(
-    debounce(() => {
-      if (editor) {
-        updateToolbarPosition();
-      }
-    }, 100),
-    [editor]
-  );
-
-  // Add event listeners for selection changes
+  // Handle content updates from props
   useEffect(() => {
-    if (!editor) return;
-    
-    // Check for selection when mouse up happens anywhere in the document
-    const handleMouseUp = () => {
-      if (!editor.view.state.selection.empty) {
-        setSelectionActive(true);
-        debouncedUpdateToolbarPosition();
-      } else {
-        setSelectionActive(false);
+    if (editor && initialContent && editor.isEmpty) {
+      editor.commands.setContent(initialContent)
+    } else if (
+      editor && 
+      initialContent && 
+      Math.abs(initialContent.length - editor.getHTML().length) > 10
+    ) {
+      // Store cursor position
+      const { from, to } = editor.state.selection
+      
+      // Update content
+      editor.commands.setContent(initialContent)
+      
+      // Restore cursor position if possible
+      try {
+        editor.commands.setTextSelection({ from, to })
+      } catch (e) {
+        console.debug('Could not restore cursor position after content update')
       }
-    };
-    
-    // Also listen for keyup events that might change selection
-    const handleKeyUp = (event: KeyboardEvent) => {
-      // Only check selection for navigation keys or key combinations that might affect selection
-      if (
-        event.key.startsWith('Arrow') ||
-        event.key === 'Home' ||
-        event.key === 'End' ||
-        event.key === 'PageUp' ||
-        event.key === 'PageDown' ||
-        (event.shiftKey && !event.metaKey && !event.ctrlKey) ||
-        event.key === 'Shift'
-      ) {
-        if (!editor.view.state.selection.empty) {
-          setSelectionActive(true);
-          debouncedUpdateToolbarPosition();
-        } else {
-          setSelectionActive(false);
-        }
-      }
-    };
-    
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('keyup', handleKeyUp);
-    
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [editor, debouncedUpdateToolbarPosition]);
-
+    }
+  }, [editor, initialContent])
+  
   if (!editor) {
     return null
   }
 
   return (
     <div className="relative min-h-[calc(100vh_-_10rem)]" ref={editorContainerRef}>
-      {/* Floating formatting toolbar */}
-      <FloatingToolbar 
+      {/* Floating button toolbar */}
+      <FloatingButtonToolbar 
         editor={editor}
-        isActive={selectionActive}
-        position={floatingMenuPosition}
         onImageAdd={() => setImageDialogOpen(true)}
       />
+      <div className="absolute bottom-4 right-4 pointer-events-none text-xs text-muted-foreground/30">
+        <span className="hidden sm:inline">Click the keyboard button for formatting options</span>
+      </div>
       
       {/* Main editor - completely borderless design */}
       <div>
         <EditorContent 
           editor={editor} 
           className="min-h-[calc(100vh_-_10rem)] py-4 focus:outline-none prose prose-sm sm:prose max-w-none dark:prose-invert border-none editor-borderless"
-          onClick={() => {
-            // When clicking in the editor, check if there's a selection
-            if (!editor.view.state.selection.empty) {
-              setSelectionActive(true);
-              debouncedUpdateToolbarPosition();
-            }
-          }}
-          onFocus={() => {
-            // When focusing, check if there's already a selection
-            if (!editor.view.state.selection.empty) {
-              setSelectionActive(true);
-              debouncedUpdateToolbarPosition();
-            }
-          }}
-          onBlur={() => {
-            // Hide toolbar when editor loses focus
-            setSelectionActive(false);
-          }}
         />
       </div>
     </div>

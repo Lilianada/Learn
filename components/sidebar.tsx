@@ -175,7 +175,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <div
       className={cn(
-        "h-full overflow-y-auto border-r border-gray-100 dark:border-border bg-white dark:bg-background py-2 sidebar-transition",
+        "h-full overflow-y-auto border-r border-gray-100 dark:border-border bg-background dark:bg-sidebar warm:bg-warm-sidebar shadow-lg md:shadow-none py-2 sidebar-transition",
         open ? "sidebar-open" : "sidebar-closed"
       )}
     >
