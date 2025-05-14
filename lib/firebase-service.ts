@@ -26,7 +26,7 @@ const db: Firestore = firebaseDB as Firestore;
 
 // Subject operations
 export async function fetchSubjects() {
-  const q = query(collection(db, 'subjects'), orderBy('order', 'asc'));
+  const q = query(collection(db, 'learn', 'data', 'subjects'), orderBy('order', 'asc'));
   const snapshot = await getDocs(q);
   const subjects: Record<string, Subject> = {};
   
@@ -44,7 +44,12 @@ export async function fetchSubjects() {
 }
 
 export async function addSubject(title: string, description: string = '') {
-  const subjectsRef = collection(db, 'subjects');
+  // Ensure the learn/data path exists
+  await setDoc(doc(db, 'learn', 'data'), {
+    lastUpdated: serverTimestamp()
+  }, { merge: true });
+  
+  const subjectsRef = collection(db, 'learn', 'data', 'subjects');
   const q = query(subjectsRef, orderBy('order', 'desc'));
   const snapshot = await getDocs(q);
   const highestOrder = snapshot.docs[0]?.data()?.order || 0;
@@ -72,7 +77,7 @@ export async function addSubject(title: string, description: string = '') {
 }
 
 export async function updateSubject(id: string, title: string, description: string = '') {
-  const subjectRef = doc(db, 'subjects', id);
+  const subjectRef = doc(db, 'learn', 'data', 'subjects', id);
   await updateDoc(subjectRef, {
     title,
     description,
@@ -83,14 +88,14 @@ export async function updateSubject(id: string, title: string, description: stri
 }
 
 export async function deleteSubject(id: string) {
-  await deleteDoc(doc(db, 'subjects', id));
+  await deleteDoc(doc(db, 'learn', 'data', 'subjects', id));
   return id;
 }
 
 // Topic operations
 export async function fetchTopics(subjectId: string) {
   const q = query(
-    collection(db, 'subjects', subjectId, 'topics'),
+    collection(db, 'learn', 'data', 'subjects', subjectId, 'topics'),
     orderBy('order', 'asc')
   );
   const snapshot = await getDocs(q);
@@ -111,7 +116,7 @@ export async function fetchTopics(subjectId: string) {
 }
 
 export async function addTopic(subjectId: string, title: string, description: string = '') {
-  const topicsRef = collection(db, 'subjects', subjectId, 'topics');
+  const topicsRef = collection(db, 'learn', 'data', 'subjects', subjectId, 'topics');
   const q = query(topicsRef, orderBy('order', 'desc'));
   const snapshot = await getDocs(q);
   const highestOrder = snapshot.docs[0]?.data()?.order || 0;
@@ -129,7 +134,7 @@ export async function addTopic(subjectId: string, title: string, description: st
   });
   
   // Update the subject's topicOrder array
-  const subjectRef = doc(db, 'subjects', subjectId);
+  const subjectRef = doc(db, 'learn', 'data', 'subjects', subjectId);
   const subjectSnap = await getDoc(subjectRef);
   if (subjectSnap.exists()) {
     const topicOrder = subjectSnap.data().topicOrder || [];
@@ -158,7 +163,7 @@ export async function updateTopic(
   title: string, 
   description: string = ''
 ) {
-  const topicRef = doc(db, 'subjects', subjectId, 'topics', topicId);
+  const topicRef = doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId);
   await updateDoc(topicRef, {
     title,
     description,
@@ -169,7 +174,7 @@ export async function updateTopic(
 }
 
 export async function updateTopicContent(subjectId: string, topicId: string, content: string) {
-  const topicRef = doc(db, 'subjects', subjectId, 'topics', topicId);
+  const topicRef = doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId);
   await updateDoc(topicRef, {
     content,
     updatedAt: serverTimestamp()
@@ -179,10 +184,10 @@ export async function updateTopicContent(subjectId: string, topicId: string, con
 }
 
 export async function deleteTopic(subjectId: string, topicId: string) {
-  await deleteDoc(doc(db, 'subjects', subjectId, 'topics', topicId));
+  await deleteDoc(doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId));
   
   // Update the subject's topicOrder array
-  const subjectRef = doc(db, 'subjects', subjectId);
+  const subjectRef = doc(db, 'learn', 'data', 'subjects', subjectId);
   const subjectSnap = await getDoc(subjectRef);
   if (subjectSnap.exists()) {
     const topicOrder = subjectSnap.data().topicOrder || [];
@@ -198,7 +203,7 @@ export async function deleteTopic(subjectId: string, topicId: string) {
 // Subtopic operations
 export async function fetchSubtopics(subjectId: string, topicId: string) {
   const q = query(
-    collection(db, 'subjects', subjectId, 'topics', topicId, 'subtopics'),
+    collection(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId, 'subtopics'),
     orderBy('order', 'asc')
   );
   const snapshot = await getDocs(q);
@@ -221,7 +226,7 @@ export async function fetchSubtopics(subjectId: string, topicId: string) {
 }
 
 export async function addSubtopic(subjectId: string, topicId: string, title: string) {
-  const subtopicsRef = collection(db, 'subjects', subjectId, 'topics', topicId, 'subtopics');
+  const subtopicsRef = collection(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId, 'subtopics');
   const q = query(subtopicsRef, orderBy('order', 'desc'));
   const snapshot = await getDocs(q);
   const highestOrder = snapshot.docs[0]?.data()?.order || 0;
@@ -240,7 +245,7 @@ export async function addSubtopic(subjectId: string, topicId: string, title: str
   });
   
   // Update the topic's subtopicOrder array to include the new subtopic
-  const topicRef = doc(db, 'subjects', subjectId, 'topics', topicId);
+  const topicRef = doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId);
   const topicSnapshot = await getDoc(topicRef);
   
   if (topicSnapshot.exists()) {
@@ -274,7 +279,7 @@ export async function updateSubtopic(
   subtopicId: string, 
   title: string
 ) {
-  const subtopicRef = doc(db, 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId);
+  const subtopicRef = doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId);
   await updateDoc(subtopicRef, {
     title,
     updatedAt: serverTimestamp(),
@@ -290,7 +295,7 @@ export async function updateSubtopicContent(
   subtopicId: string,
   content: string
 ) {
-  const subtopicRef = doc(db, 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId);
+  const subtopicRef = doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId);
   await updateDoc(subtopicRef, {
     content,
     updatedAt: serverTimestamp(),
@@ -307,7 +312,7 @@ export async function updateSubtopicStatus(
   status: 'not-started' | 'in-progress' | 'completed',
   completionPercentage: number
 ) {
-  const subtopicRef = doc(db, 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId);
+  const subtopicRef = doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId);
   await updateDoc(subtopicRef, {
     status,
     completionPercentage,
@@ -324,7 +329,7 @@ export async function updateSubtopicNotes(
   subtopicId: string,
   notes: string
 ) {
-  const subtopicRef = doc(db, 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId);
+  const subtopicRef = doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId);
   await updateDoc(subtopicRef, {
     notes,
     updatedAt: serverTimestamp()
@@ -334,7 +339,7 @@ export async function updateSubtopicNotes(
 }
 
 export async function deleteSubtopic(subjectId: string, topicId: string, subtopicId: string) {
-  await deleteDoc(doc(db, 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId));
+  await deleteDoc(doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId, 'subtopics', subtopicId));
   return subtopicId;
 }
 
@@ -405,7 +410,7 @@ export async function initializeAdmin(email: string, displayName: string) {
 }
 
 export async function reorderTopics(subjectId: string, topicOrder: string[]) {
-  const subjectRef = doc(db, 'subjects', subjectId);
+  const subjectRef = doc(db, 'learn', 'data', 'subjects', subjectId);
   await updateDoc(subjectRef, {
     topicOrder,
     updatedAt: serverTimestamp()
@@ -415,7 +420,7 @@ export async function reorderTopics(subjectId: string, topicOrder: string[]) {
 }
 
 export async function reorderSubtopics(subjectId: string, topicId: string, subtopicOrder: string[]) {
-  const topicRef = doc(db, 'subjects', subjectId, 'topics', topicId);
+  const topicRef = doc(db, 'learn', 'data', 'subjects', subjectId, 'topics', topicId);
   await updateDoc(topicRef, {
     subtopicOrder,
     updatedAt: serverTimestamp()
@@ -423,3 +428,5 @@ export async function reorderSubtopics(subjectId: string, topicId: string, subto
   
   return { topicId, subtopicOrder };
 }
+
+

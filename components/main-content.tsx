@@ -6,7 +6,7 @@ import { useFirebaseStore } from "../store/use-firebase-store";
 import { useAuth } from "../lib/auth-context";
 import { Editor } from "./editor";
 import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DialogForm } from "./ui/dialog-form";
 import { cn } from "../lib/utils";
@@ -29,25 +29,27 @@ export function MainContent({ sidebarOpen }: MainContentProps) {
   const store = user && firebaseEnabled ? useFirebaseStore() : useStore();
 
   // Helper function to format dates consistently across the component
-const formatDate = (dateString?: string, showTime: boolean = false) => {
-  if (!dateString) return "Unknown";
+  const formatDate = (dateString?: string, showTime: boolean = false) => {
+    if (!dateString) return "Unknown";
 
-  // Try to parse the date string (handles both ISO strings and Firebase timestamps)
-  try {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      ...(showTime ? {
-        hour: "2-digit",
-        minute: "2-digit"
-      } : {})
-    }).format(date);
-  } catch (e) {
-    return "Invalid date";
-  }
-};
+    // Try to parse the date string (handles both ISO strings and Firebase timestamps)
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        ...(showTime
+          ? {
+              hour: "2-digit",
+              minute: "2-digit",
+            }
+          : {}),
+      }).format(date);
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
 
   const {
     currentSubjectId,
@@ -106,7 +108,6 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
     contentTitle = subtopic.title;
     currentContent = subtopic.content;
 
-
     content = (
       <>
         <div className="w-full mb-4 flex justify-between gap-4 flex-wrap sm:flex-row">
@@ -151,7 +152,6 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
         </>
       );
     } else {
-
       content = (
         <>
           <div className="mb-6 flex flex-col">
@@ -167,13 +167,18 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
               <Button
                 key={subtopic.id}
                 variant="ghost"
-                className="justify-start h-auto py-3 px-4 minimal-button hover:no-underline"
+                className="justify-start h-auto w-full transition-all duration-200 group hover:no-underline"
                 onClick={() =>
                   useStore.getState().setCurrentSubtopic(subtopic.id)
                 }
               >
-                <div className="text-left">
-                  <div className="font-medium">{subtopic.title}</div>
+                <div className="text-left w-full border-l-2 border-muted hover:border-primary pl-3 py-2 group-hover:pl-4 transition-all">
+                  <div className="font-medium flex items-center">
+                    {subtopic.title}
+                    <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
                   <div className="text-muted-foreground text-sm mt-1 line-clamp-2">
                     {subtopic.content ? (
                       <div
@@ -182,7 +187,7 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
                           __html:
                             subtopic.content
                               .replace(/<[^>]*>/g, " ")
-                              .substring(0, 150)
+                              .substring(0, 100)
                               .trim() + "...",
                         }}
                       />
@@ -193,9 +198,8 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
                     )}
                   </div>
                   <div className="flex text-xs text-muted-foreground mt-2">
-                    <span>
-                      <span className="font-medium">Updated:</span>{" "}
-                      {formatDate(subtopic.updatedAt)}
+                    <span className="ml-auto">
+                      Updated: {formatDate(subtopic.updatedAt)}
                     </span>
                   </div>
                 </div>
@@ -220,7 +224,6 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
 
     contentTitle = subject.title;
 
-
     content = (
       <>
         <div className="mb-6 flex flex-col">
@@ -239,21 +242,32 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
                 <Button
                   key={topic.id}
                   variant="ghost"
-                  className="justify-start h-auto py-3 px-4 minimal-button"
+                  className="justify-start h-auto py-4 px-5 w-full group hover:bg-muted/50 transition-all duration-200 rounded-lg border border-transparent hover:border-border"
                   onClick={() => useStore.getState().setCurrentTopic(topic.id)}
                 >
                   <div className="text-left w-full">
-                    <div className="font-medium">{topic.title}</div>
-                    <div className="text-muted-foreground text-sm mt-1">
-                      {topicSubtopics.length > 0 ? (
-                        <span>{topicSubtopics.length} subtopics</span>
-                      ) : (
-                        <span className="italic">No subtopics yet</span>
-                      )}
+                    <div className="font-medium text-base flex items-center">
+                      {topic.title}
+                      <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     </div>
-                    <div className="flex text-xs text-muted-foreground mt-1">
-                      <span className="font-medium">Updated:</span>{" "}
-                      {formatDate(topic.updatedAt)}
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="text-muted-foreground text-sm">
+                        {topicSubtopics.length > 0 ? (
+                          <span className="px-2 py-0.5 bg-muted rounded-full text-xs">
+                            {topicSubtopics.length} subtopic
+                            {topicSubtopics.length !== 1 ? "s" : ""}
+                          </span>
+                        ) : (
+                          <span className="italic text-xs">
+                            No subtopics yet
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(topic.updatedAt)}
+                      </div>
                     </div>
                   </div>
                 </Button>
@@ -298,7 +312,9 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
           sidebarOpen && "opacity-50 md:opacity-100"
         )}
       >
-        <div className="mx-auto max-w-5xl h-full py-6 px-2 sm:px-6">{content}</div>
+        <div className="mx-auto max-w-5xl h-full py-6 px-2 sm:px-6">
+          {content}
+        </div>
       </main>
 
       {/* Dialog forms */}
