@@ -73,7 +73,7 @@ export function Header({ children }: HeaderProps) {
         <div className="flex items-center gap-2">
           {children}
           <h1 className="text-base font-medium text-gray-900 dark:text-gray-50">
-            /Learn/Dev
+            LearnDev
           </h1>
         </div>
 
