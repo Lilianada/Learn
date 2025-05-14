@@ -79,7 +79,7 @@ export const defaultContent = {
       </ol>
       </div>
 
-        <p><strong>Note:</strong> All data is stored locally in your browser. Use the export feature to save your content regularly.</p>
+        <p><strong>Note:</strong> This app was made for personal use not to be redistributed.</p>
       </div>`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
