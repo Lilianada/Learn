@@ -32,7 +32,7 @@ export function SignInDialog() {
         <DialogHeader>
           <DialogTitle>Sign in to LearnDev</DialogTitle>
           <DialogDescription>
-            Sign in with your Google account to save your data and sync across devices.
+            To use this feature fork the repo, clone it and add your firebase keys. You can also use the app without signing in, your data will be saved to localstorage.
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-center justify-center py-4">

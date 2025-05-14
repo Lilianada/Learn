@@ -68,7 +68,7 @@ export function AppLayout() {
               "fixed top-14 bottom-0 left-0 z-20 overflow-y-auto",
               "md:relative md:top-0 lg:w-80 md:z-0",
               "transition-transform duration-300 ease-in-out transform",
-              "bg-muted/35 dark:bg-sidebar warm:bg-warm-sidebar shadow-lg md:shadow-none",
+              "bg-muted/35 dark:bg-sidebar  shadow-lg md:shadow-none",
               "w-64 md:flex-shrink-0", 
               isDesktop
                 ? "translate-x-0"

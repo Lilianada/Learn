@@ -1,13 +1,24 @@
 "use client"
 import { Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
+import { useSettings } from "@/store/use-settings"
 
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { useState, useEffect } from "react"
 
 export function ModeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useSettings()
+  const [mounted, setMounted] = useState(false)
+  
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  if (!mounted) {
+    return null
+  }
 
   return (
       <Tooltip>
@@ -21,9 +32,24 @@ export function ModeToggle() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setTheme("light")}
+                className={theme === "light" ? "bg-accent" : ""}
+              >
+                Light
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setTheme("dark")}
+                className={theme === "dark" ? "bg-accent" : ""}
+              >
+                Dark
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setTheme("warm")}
+                className={theme === "warm" ? "bg-accent" : ""}
+              >
+                Warm
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </TooltipTrigger>

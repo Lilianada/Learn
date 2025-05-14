@@ -72,7 +72,9 @@ export function Header({ children }: HeaderProps) {
       <header className="flex h-14 items-center justify-between border-b border-gray-100 dark:border-border px-4 bg-white dark:bg-background shadow-sm w-full">
         <div className="flex items-center gap-2">
           {children}
-          <h1 className="text-base font-medium text-gray-900 dark:text-gray-50">LearnIt</h1>
+          <h1 className="text-base font-medium text-gray-900 dark:text-gray-50">
+            /Learn/Dev
+          </h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -80,7 +82,7 @@ export function Header({ children }: HeaderProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className={`h-2 w-2 rounded-full ${user ? "bg-green-500" : "bg-red-500"}`}
+                  className={`h-2 w-2 m-3 rounded-full ${user ? "bg-green-500" : "bg-red-500"}`}
                   aria-label={user ? "Signed in" : "Not signed in"}
                 />
               </TooltipTrigger>
@@ -95,7 +97,7 @@ export function Header({ children }: HeaderProps) {
                 onClick={() => setAddSubjectOpen(true)}
                 aria-label="Add new subject"
                 tabIndex={0}
-                className="text-gray-700 dark:text-gray-300"
+                className="text-gray-700 dark:text-gray-300 md:hidden"
               >
                 <Plus className="h-5 w-5" />
               </Button>

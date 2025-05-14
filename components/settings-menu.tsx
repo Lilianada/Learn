@@ -44,17 +44,10 @@ export function SettingsMenu() {
   // Apply theme changes to next-themes
   useEffect(() => {
     if (mounted) {
-      // Remove any existing theme classes first
-      document.documentElement.classList.remove("warm");
-
-      if (theme === "warm") {
-        document.documentElement.classList.add("warm");
-        setNextTheme("light"); // Use light as base for warm theme
-      } else {
-        setNextTheme(theme);
-      }
+      // The ThemeProvider now handles this logic
+      // This effect is kept for backward compatibility
     }
-  }, [theme, setNextTheme, mounted]);
+  }, [theme, mounted]);
 
   // Apply font family
   useEffect(() => {

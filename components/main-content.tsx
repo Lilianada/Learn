@@ -277,7 +277,7 @@ const formatDate = (dateString?: string, showTime: boolean = false) => {
     // No selection, show welcome screen
     content = (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh_-_10rem)] text-center">
-        <h2 className="text-xl font-semibold mb-2">Welcome to LearnIt</h2>
+        <h2 className="text-xl font-semibold mb-2">Welcome to LearnDev</h2>
         <p className="text-muted-foreground mb-6 max-w-md">
           Create structured learning materials organized by subjects, topics,
           and subtopics.
