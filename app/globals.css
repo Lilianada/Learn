@@ -274,3 +274,12 @@
     @apply ml-0;
   }
 }
+
+/* Welcome modal theme adaptations */
+.dark .welcome-modal-icon {
+  @apply text-blue-400;
+}
+
+.warm .welcome-modal-icon {
+  @apply text-amber-500;
+}
