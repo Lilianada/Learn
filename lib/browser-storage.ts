@@ -7,6 +7,7 @@ import { nanoid } from 'nanoid';
 const SUBJECTS_STORAGE_KEY = 'learnit-subjects';
 const TOPICS_STORAGE_KEY = 'learnit-topics';
 const SUBTOPICS_STORAGE_KEY = 'learnit-subtopics';
+const FIRST_VISIT_KEY = 'learnit-first-visit';
 
 // Slugify a string (convert to lowercase, replace spaces with hyphens, remove special chars)
 export function slugify(text: string): string {
@@ -114,6 +115,61 @@ export function deleteSubtopicFiles(subtopicId: string): void {
   const subtopics = getStorageItem<Record<string, Subtopic>>(SUBTOPICS_STORAGE_KEY, {});
   delete subtopics[subtopicId];
   setStorageItem(SUBTOPICS_STORAGE_KEY, subtopics);
+}
+
+// Check if this is the user's first visit to the app
+export function isFirstVisit(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(FIRST_VISIT_KEY) === null;
+}
+
+// Mark that the user has visited the app
+export function markVisited(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(FIRST_VISIT_KEY, 'visited');
+}
+
+// Save default content to browser storage
+export function saveDefaultContent(defaultData: {
+  subjects: Record<string, Subject>;
+  topics: Record<string, Topic>;
+  subtopics: Record<string, Subtopic>;
+}): void {
+  // Update timestamps to current time for all items
+  const currentTime = new Date().toISOString();
+  
+  // Save each subject
+  Object.values(defaultData.subjects).forEach(subject => {
+    const subjectWithTime = {
+      ...subject,
+      createdAt: currentTime,
+      updatedAt: currentTime
+    };
+    saveSubject(subjectWithTime);
+  });
+  
+  // Save each topic
+  Object.values(defaultData.topics).forEach(topic => {
+    const topicWithTime = {
+      ...topic,
+      createdAt: currentTime,
+      updatedAt: currentTime
+    };
+    saveTopic(topicWithTime);
+  });
+  
+  // Save each subtopic
+  Object.values(defaultData.subtopics).forEach(subtopic => {
+    const subtopicWithTime = {
+      ...subtopic,
+      createdAt: currentTime,
+      updatedAt: currentTime
+    };
+    saveSubtopic(subtopicWithTime);
+  });
+  
+  // Mark that the user has visited
+  markVisited();
 }
 
 // Load data from browser storage
